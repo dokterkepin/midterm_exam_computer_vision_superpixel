@@ -1,0 +1,284 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=2.0cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{microtype}
+% \usepackage{tikz}                       % not needed here; enable if you add diagrams
+% \usetikzlibrary{positioning,arrows.meta}
+\usepackage[colorlinks=true,linkcolor=blue,urlcolor=blue]{hyperref}
+% \usepackage[UTF8]{ctex} \setCJKmainfont{Noto Serif CJK TC}   % only needed for Chinese text (XeLaTeX)
+
+\graphicspath{{figures/}}
+\captionsetup{font=footnotesize,skip=3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{3pt}
+
+% Short note under a section heading that names the code implementing it.
+\newenvironment{impl}{\par\smallskip\noindent\footnotesize\textbf{Implementation.}\ }{\par\smallskip}
+
+\title{\vspace{-1.2em}Climbing-Hold Detection with Superpixels\vspace{-0.5em}}
+\author{[Your name and student ID] \\ \small Robot and Computer Vision --- Midterm, National Taiwan Normal University}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+%==========================================================================
+\section{Introduction and objective}
+\label{sec:intro}
+The task is to find the colored holds in a picture of a climbing wall and output, for each hold, its
+\emph{type}, its \emph{position} $(x,y,z)$ and its \emph{orientation} (roll, pitch, yaw), where the orientation
+is the angle of the longest straight edge of the hold. The three superpixel algorithms SLIC, LSC and SEEDS
+(OpenCV \texttt{ximgproc}) have to be compared, and the choice of parameters has to be justified and its
+sensitivity shown.
+
+This version of the report covers the \textbf{synthetic walls} of the perception-challenge simulator. I use three
+scenes (27 holds in total) generated with the simulator, each with its screenshot, the scene description
+(\texttt{scene.json}, used \emph{only} to score the result), and a stereo screenshot. The real photographs are
+treated in Section~\ref{sec:real}. The type of a hold is its color class (red, green or blue); all holds are the same
+object and differ only in color.
+
+%==========================================================================
+\section{Approach}
+\label{sec:approach}
+The pipeline is: calibrate with the red marker $\rightarrow$ superpixels $\rightarrow$ hold candidates
+$\rightarrow$ type, position, yaw $\rightarrow$ depth from stereo. Nothing in the detection reads the scene file.
+
+\paragraph{Calibration.}
+The red square in the image has known size and its bottom-left corner is the origin. I segment it by color, fit its
+four corners and compute a homography from pixels to wall meters. A homography, not just a scale and an offset, is
+needed because the camera is slightly tilted: on one scene it reduced the mean position error from 2.1~cm to 0.8~cm.
+The handout says the marker is 1~m. This holds for walls at least 2~m wide, but the simulator draws a 0.1~m marker
+on narrower walls (my third scene is 0.8~m wide), so the marker size is a calibration input, read from the scene file
+(1~m if absent). The marker also gives the image resolution, and every image is resized to
+\textbf{370~px/m}, so all size parameters are the same for every wall (a hold is then about 14~px wide).
+
+\paragraph{Superpixels.}
+SLIC (the SLICO variant, Lab color, 3$\times$3 blur), LSC and SEEDS from \texttt{cv2.ximgproc}. Each superpixel is
+reduced to its mean Lab color. The superpixel size is a swept parameter (Section~\ref{sec:params}); the baseline is a
+5~px SLIC region.
+
+\paragraph{Hold candidates.}
+A hold is a small, compact patch whose color differs from the wall around it. For every superpixel I compute the
+Lab distance between its mean color and the \emph{median} color of the superpixels in a 36~px window (median, so that
+the holds themselves do not bias the wall color). Superpixels with contrast above a threshold $T$ are kept, cleaned
+with a morphological opening and closing, and grouped into connected components. A component is accepted if its
+area (29--540~px$^2$ at the working resolution), aspect ratio ($\le 2.5$) and solidity ($\ge 0.85$) look like a
+hold, and if its saturation is at least $S$. The saturation floor $S$ removes shadows and the gray faces of the
+volumes, which have contrast but little color. I first tried an edge-based rule (contrast with the immediate
+neighbors): it flagged every edge, 179 candidates for 10 holds. The median contrast removed this problem.
+
+\paragraph{Type and position.}
+The type is the nearest of the three hold colors in hue. The position $(x,y)$ is the hold's centroid mapped through
+the homography.
+
+\paragraph{Yaw: matching against a template.}
+The first estimate, the longest edge of the hold's outline, was poor (mean error 41$^\circ$ on the holds scored in Section~\ref{sec:results}): it often selects a side
+of the rounded bowl instead of the flat plate with the two screw holes. Following the instructor's suggestion to match the hold
+against possible views, I use the silhouette: for a hold lying flat on the wall, its silhouette is a template rotated
+in the image plane. The template is the silhouette of one training hold at yaw 0 (hold~8 of the third scene; it is
+excluded from all yaw scores). A detected hold is cut out of the \emph{original} screenshot, segmented by the chroma
+distance to the wall, normalised to the template's area and centroid, and compared with the template rotated in
+$3^\circ$ steps (with $\pm 3$~px shifts) by intersection over union; the best angle is the yaw.
+
+\paragraph{Depth $z$ from stereo.}
+The simulator's front stereo camera has two cameras 6.4~cm apart looking at the wall point straight ahead, with a
+74$^\circ$ vertical field of view (taken from the simulator's source). From the height and distance of the rig I build
+both projection matrices. Holds are detected in each half of the stereo image, matched by color and along the
+epipolar line (tolerance 6~px), and triangulated with \texttt{cv2.triangulatePoints}. The expected depth error grows
+with the square of the distance, $\sigma_z \approx d^2 \cdot 0.5\,\text{px} /(f\,b)$, so the stereo $z$ is used only
+if $\sigma_z \le 5$~cm; otherwise $z=0$.
+
+\begin{impl}
+\texttt{src/candidates.py} (calibration, contrast, candidates), \texttt{src/superpixels.py},
+\texttt{src/orientation.py} (yaw), \texttt{src/stereo.py} (rig, triangulation), \texttt{src/evaluate.py} (scoring
+only); the per-wall runners are in \texttt{src/pipelines/}.
+\end{impl}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{superpixels.jpg}
+\caption{The same patch (a hold next to a pyramid, at the working resolution) under SLIC, LSC and SEEDS with size 5.
+SLIC cells are compact and follow the hold; LSC gives an almost regular grid; SEEDS gives irregular blocks.}
+\label{fig:sp}
+\end{figure}
+
+%==========================================================================
+\section{Parameter selection and sensitivity}
+\label{sec:params}
+\paragraph{Procedure.}
+Size parameters are not tuned per wall: they follow from the working resolution. What is tuned is (i) the
+superpixel size, (ii) the contrast threshold $T$ (the ROC parameter) and (iii) the saturation floor $S$. I swept
+three algorithms $\times$ seven sizes (3--14~px) $\times$ 19 thresholds (10--100) $\times$ $S\in\{0,118\}$ on all
+three walls (2394 evaluations) and pooled the 27 holds. A detection counts as correct if it lies within 10~cm of an
+unmatched true hold (greedy matching); the score is the F1 value of the pooled true and false positives. The
+final setting is the one with the best pooled F1 \emph{and no false positives}:
+\textbf{SLIC, 5~px, $T=40$, $S=118$}.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & best size & best $T$ & found (of 27) & false pos. & F1 & time (s, 3 walls)\\
+\midrule
+SLIC  & 5 px & 40 & 18 & 0 & 0.80 & 7.9 \\
+LSC   & 4 px & 30 & 17 & 0 & 0.77 & 25.0 \\
+SEEDS & 3 px & 30 & 18 & 2 & 0.77 & 4.2 \\
+\bottomrule
+\end{tabular}
+\caption{Best pooled result per algorithm (saturation floor 118). Time is for the superpixels alone at size 5 (relative
+only: measured with several jobs running in parallel). SEEDS snaps to a block grid, so it produces 149k superpixels
+where the other two produce 383k.}
+\label{tab:algo}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{roc_and_sensitivity.png}
+\caption{Left and middle: ROC curves obtained by sweeping the contrast threshold $T$ from 10 to 100, pooled over the
+three walls (curves: best recall reachable with at most $k$ false positives; faint dots: individual thresholds).
+Right: best F1 against the superpixel size.}
+\label{fig:roc}
+\end{figure}
+
+\paragraph{Findings.}
+\begin{itemize}\setlength\itemsep{0pt}
+\item \textbf{The algorithms perform alike when the saturation floor is on} (Table~\ref{tab:algo}, 17--18 of 27;
+the 0.03 difference in F1 is one hold and within the noise of 27 holds). SLIC was chosen because it reaches its recall without any false
+positive and is faster than LSC.
+\item \textbf{Without the saturation floor the contrast alone separates the holds worse, and the algorithms differ}
+(Fig.~\ref{fig:roc}, left): to reach 20 of 27 holds LSC needs 4 false positives, SEEDS 7 and SLIC 20. I did not investigate why. With the
+floor, which rejects the gray shadows and volume faces, SLIC reaches 18 holds with no false positive, where
+without it 20 holds cost 20 false positives.
+\item \textbf{The threshold is not critical around the optimum} (Fig.~\ref{fig:thr}): between $T=30$ and 45 the
+result stays at 17--18 holds with 0--2 false positives; above 50 it degrades (13 holds at 55, 8 at 60) as
+low-contrast holds fall below $T$.
+\item \textbf{The superpixel size matters little} between 3 and 10~px (F1 0.68--0.80 for all three, Fig.~\ref{fig:roc}, right) and
+degrades at 14~px, where a superpixel is as large as the hold.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.52\linewidth]{threshold_sensitivity.png}
+\caption{Sensitivity to the contrast threshold (SLIC, 5~px, saturation floor 118, all walls).}
+\label{fig:thr}
+\end{figure}
+
+%==========================================================================
+\section{Results}
+\label{sec:results}
+Table~\ref{tab:res} shows the final output (type, position, orientation) of the baseline on each wall, scored against
+\texttt{scene.json}. Fig.~\ref{fig:det} shows the detections.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lccccccc}
+\toprule
+Wall & marker & found & FP & position & type & yaw (mean / med.) & $n_\text{yaw}$\\
+\midrule
+1 & 1 m   & 8 / 10 & 0 & 0.8 cm & 8 / 8 & 15$^\circ$ / 3$^\circ$ & 7 \\
+2 & 1 m   & 3 / 7  & 0 & 1.4 cm & 3 / 3 & 55$^\circ$ / 69$^\circ$ & 3 \\
+3 & 0.1 m & 7 / 10 & 0 & 0.6 cm & 7 / 7 & 4$^\circ$ / 3$^\circ$ & 6 \\
+\midrule
+all & & 18 / 27 & 0 & 0.8 cm & 18 / 18 & 18$^\circ$ / 3$^\circ$ & 16 \\
+\bottomrule
+\end{tabular}
+\caption{Final output on the three synthetic walls. Yaw is scored modulo 180$^\circ$ on holds that lie flat on the wall
+(not on a volume), excluding the hold the template was cut from.}
+\label{tab:res}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{detections.jpg}
+\caption{Detections on the three walls (green: matched to a true hold; labels give the hold number). No false
+positives. Missed holds are visible as uncircled holds, e.g.\ the red holds on and beside the dark pyramid at the top left of wall~3.}
+\label{fig:det}
+\end{figure}
+
+\paragraph{Type and position.}
+All 18 detected holds have the right type, and the mean position error is 0.8~cm (maximum 2.2~cm). The error is
+about the size of a pixel at the working resolution (0.27~cm) times a few, and it does not depend on the wall, which
+supports the homography calibration.
+
+\paragraph{Yaw.}
+With template matching the median error is 3$^\circ$ (the step of the search), against 41$^\circ$ mean with the
+edge method, and wall~3 (holds 60--80~px wide in the original screenshot) reaches 4$^\circ$. Wall~2 fails: its holds are
+only 6--7~px wide in the screenshot, so there is no shape to match. One hold on wall~1 is wrong by 87$^\circ$: close to a 90$^\circ$ ambiguity, since its silhouette is nearly square at this
+size (\texttt{baseline/yaw\_examples.png}); I have not tested this explanation further.
+
+\paragraph{Depth.}
+At the near camera of wall~1 (0.75~m) the stereo $z$ has an error of about 1~cm; at 1.8--2~m (walls 2 and 3) it is
+3--9~cm for holds that are flat on the wall, so the rule in Section~\ref{sec:approach} sets $z=0$ there. The stereo
+view also finds few holds (2--4 per wall): each eye image is only 328~px high, so holds are only a few pixels wide.
+
+%==========================================================================
+\section{Problems encountered and limits}
+\label{sec:limits}
+\begin{itemize}\setlength\itemsep{0pt}
+\item \textbf{Wrong marker size.} On wall~3 the first run found 0 of 10 holds, because I assumed a 1~m marker; the
+scene's own marker is 0.1~m. Reading the marker size and normalising the resolution fixed it. The detector thresholds
+were not changed.
+\item \textbf{Resolution.} A hold of 5--6~px (wall~2 before resizing) carries no usable information; enlarging the image
+2$\times$ recovered 3 of 7 holds and removed 4 false positives, but small holds stay the weakest case.
+\item \textbf{Holds on volumes.} Five of the 27 holds sit on a pyramid; I find only one, and it is output with
+$z=0$ and roll $=0$, whereas the truth is $z=0.20$~m and roll 73$^\circ$. Roll and pitch are not estimated at all (always 0),
+which is right for the 22 holds that lie flat on the wall but wrong for these five. Over the 18 detected holds this
+leaves a mean roll/pitch error of 4$^\circ$ and a mean $z$ error of 1.1~cm.
+\item \textbf{Missed holds.} Of the nine misses, four are on a volume. Of the other five, one lies under the red marker
+(wall~2) and one touches a dark pyramid face (wall~3); I did not diagnose the remaining three.
+\item \textbf{The evaluation is optimistic.} The parameters were chosen on the same three walls that are scored;
+the resolution handling was introduced after wall~2 and wall~3 exposed its need. The contrast threshold and
+saturation floor were first chosen on wall~1 and an earlier scene (since removed), so the numbers above are not a
+held-out test. A fresh scene should be scored with the settings frozen.
+\item \textbf{Template from one hold,} so the yaw estimate assumes all holds look like it; the angle convention
+(zero pose, sign) was inferred from the data (it matches the simulator's scene files), not from documentation.
+\end{itemize}
+
+%==========================================================================
+\section{Real climbing-wall photographs}
+\label{sec:real}
+\emph{This section is still to be completed.} The two real photographs have no marker; the handout gives a wall grid
+of 20~cm, which would take the role of the red square. So far I only ran the detector in pixel space on them and
+inspected the result visually: large and elongated holds are missed and there are false positives at the dark top
+of the wall, so the synthetic parameters do not transfer unchanged and these walls need their own calibration and
+parameter selection.
+
+\begin{thebibliography}{9}\small
+\bibitem{slic} R.~Achanta et al., ``SLIC superpixels compared to state-of-the-art superpixel methods,'' IEEE TPAMI, 2012.
+\bibitem{lsc} Z.~Li and J.~Chen, ``Superpixel segmentation using linear spectral clustering,'' CVPR, 2015.
+\bibitem{seeds} M.~Van den Bergh et al., ``SEEDS: superpixels extracted via energy-driven sampling,'' ECCV, 2012.
+\end{thebibliography}
+
+%==========================================================================
+\appendix
+\section{Code layout and how to run}
+\label{sec:code}
+\raggedright
+\begin{itemize}\setlength\itemsep{0pt}
+\item \texttt{dataset/<wall>/}: \texttt{image.png} (or \texttt{wall.png}), \texttt{scene.json} (ground truth, synthetic
+walls only, used for scoring and for the marker size), \texttt{stereo.png}, \texttt{camera.json} (stereo height and
+distance in meters, read from the simulator page; they are not in \texttt{scene.json}).
+\item \texttt{src/}: \texttt{candidates.py}, \texttt{superpixels.py}, \texttt{orientation.py}, \texttt{baseline.py} (loads the baseline values), \texttt{stereo.py}, \texttt{evaluate.py}, \texttt{paths.py}; \texttt{src/pipelines/}:
+\texttt{run\_synthetic}, \texttt{run\_stereo}, \texttt{run\_final} (merge into \texttt{output.json}),
+\texttt{experiments} (the sweep; \texttt{--replot} redraws from the saved csv), \texttt{make\_template},
+\texttt{make\_yaw\_examples}, \texttt{make\_report\_figures}, \texttt{run\_images} and \texttt{demo\_superpixels}.
+\item \texttt{baseline/}: everything that defines the baseline. \texttt{parameters.json} holds all tuning values
+(working resolution 370~px/m, hold scale 0.6, SLIC region, contrast threshold 40, saturation floor 118, size limits,
+stereo and yaw settings); the code reads them from there. \texttt{yaw\_template.png} is the template,
+\texttt{yaw\_template\_source.png} the hold it was cut from, and \texttt{yaw\_examples.png} shows the template matched
+to every scored hold.
+\item \texttt{outputs/<wall>/}: results of one wall, with its own \texttt{scripts/run.py} that holds that wall's
+settings. \texttt{output.json} is the final result (type, $x,y,z$, roll, pitch, yaw); \texttt{main\_view.json} is a debug
+copy. The pooled sweep and the plots are in \texttt{outputs/all\_walls/}.
+\item Run one wall: \texttt{python3 outputs/synthetic\_wall1/scripts/run.py}. Optional arguments:
+\texttt{--marker M} (marker side, m), \texttt{--stereo-height H}, \texttt{--stereo-distance D}, \texttt{--thresh T}
+(default 40), \texttt{--min-sat S} (default 118), \texttt{--sweep}. A new wall needs a new \texttt{dataset/<wall>/}
+folder and a copy of a \texttt{run.py}. The report builds with \texttt{pdflatex main.tex} (twice) in \texttt{report/}.
+\item Needs \texttt{opencv-contrib-python}, \texttt{numpy}, \texttt{matplotlib}.
+\end{itemize}
+
+\end{document}

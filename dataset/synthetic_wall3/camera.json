@@ -1,0 +1,4 @@
+{
+  "stereo": {"height_m": 0.2, "distance_m": 1.8},
+  "note": "read from a screenshot of the simulator page (Scene 26, seed 5); not stored in scene.json"
+}
