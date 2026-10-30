@@ -38,6 +38,12 @@ def camera_path(name):
     return _file(name, "camera.json")
 
 
+def synthetic_walls():
+    """Names of the dataset folders that have a scene.json and a main image, in order."""
+    return sorted(p.name for p in DATASET.iterdir()
+                  if (p / "scene.json").exists() and ((p / "image.png").exists() or (p / "wall.png").exists()))
+
+
 def out_path(wall, filename):
     """Path inside outputs/<wall>/ (mirrors dataset/<wall>/), creating the folder if needed."""
     d = OUT / wall

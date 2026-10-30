@@ -15,7 +15,7 @@ import evaluate as ev
 import orientation as ori
 import paths
 
-WALLS = ["synthetic_wall1", "synthetic_wall2", "synthetic_wall3"]
+WALLS = paths.synthetic_walls()
 TEMPLATE_HOLD = ("synthetic_wall3", "hold_8")
 
 

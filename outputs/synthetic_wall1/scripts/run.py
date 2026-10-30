@@ -1,6 +1,6 @@
 """Everything for synthetic_wall1: its settings live here, the logic lives in src/pipelines/.
 
-usage: python3 run.py [--marker M] [--stereo-height H] [--stereo-distance D] [--thresh T] [--min-sat S] [--sweep]
+usage: python3 run.py [--marker M] [--stereo-height H] [--stereo-distance D] [--thresh T] [--min-sat S] [--no-pooled] [--force]
 Marker size (m) and stereo camera height / distance (m) default to scene.json / camera.json.
 """
 import argparse
@@ -21,7 +21,8 @@ if __name__ == "__main__":
     ap.add_argument("--stereo-distance", type=float, help="stereo camera distance to the wall in metres (default: camera.json)")
     ap.add_argument("--thresh", type=float, default=baseline.P["candidates"]["contrast_threshold"], help="local-contrast threshold")
     ap.add_argument("--min-sat", type=float, default=baseline.P["candidates"]["min_saturation"], help="saturation floor")
-    ap.add_argument("--sweep", action="store_true", help="also run the slow algorithm x size x threshold sweep")
+    ap.add_argument("--no-pooled", action="store_true", help="skip updating outputs/all_walls/ (the sweep over all walls)")
+    ap.add_argument("--force", action="store_true", help="recompute the sweep of every wall, not only the changed ones")
     a = ap.parse_args()
 
     demo_superpixels.main([WALL])
@@ -29,5 +30,5 @@ if __name__ == "__main__":
     st = run_stereo.main(WALL, thresh=a.thresh, min_sat=a.min_sat,
                     height=a.stereo_height, distance=a.stereo_distance)              # stereo: x, y, z
     run_final.main(WALL, dets, st)                                                   # merge -> output.json
-    if a.sweep:
-        experiments.main(WALL)
+    if not a.no_pooled:                                  # refresh outputs/all_walls/; only changed walls are recomputed
+        experiments.main(force=a.force)

@@ -4,7 +4,7 @@ Every wall is resized to the working resolution first (see run_synthetic.py), so
 pixels means the same thing on every wall. Per-wall results go to outputs/<wall>/sweep.csv; the pooled
 table and the ROC / sensitivity plots go to outputs/all_walls/.
 
-usage: python3 experiments.py [wall ...]      (default: all synthetic walls)
+usage: python3 experiments.py [wall ...] [--force] [--replot]      (default: every synthetic wall in dataset/)
 """
 import csv
 import sys
@@ -26,7 +26,6 @@ import evaluate as ev
 import paths
 import superpixels as sp
 
-WALLS = ["synthetic_wall1", "synthetic_wall2", "synthetic_wall3"]
 ALGOS = ("slic", "lsc", "seeds")
 SIZES = [3, 4, 5, 6, 8, 10, 14]            # superpixel side in pixels at the working resolution
 THRESH = list(range(10, 105, 5))           # contrast threshold: the ROC parameter
@@ -102,39 +101,59 @@ def pooled(rows, **fixed):
     return acc
 
 
-def load_rows():
+def read_csv(path):
     ints = ("size", "n_sp", "thresh", "tp", "fp", "fn", "n_gt")
-    rows = []
-    with open(paths.out_path("all_walls", "sweep_all.csv")) as f:
-        for r in csv.DictReader(f):
-            r = {k: (int(v) if k in ints else float(v) if k in ("min_sat", "err_cm", "t_sp") else v)
-                 for k, v in r.items()}
-            rows.append(r)
-    return rows
+    with open(path) as f:
+        return [{k: (int(v) if k in ints else float(v) if k in ("min_sat", "err_cm", "t_sp") else v)
+                 for k, v in r.items()} for r in csv.DictReader(f)]
 
 
-def main(walls=WALLS, replot=False):
+def load_rows():
+    return read_csv(paths.out_path("all_walls", "sweep_all.csv"))
+
+
+def write_csv(path, rows):
+    with open(path, "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=list(rows[0]))
+        wr.writeheader()
+        wr.writerows(rows)
+
+
+def is_fresh(wall):
+    """The wall's cached sweep (outputs/<wall>/sweep.csv) is newer than everything it depends on."""
+    cache = Path(paths.out_path(wall, "sweep.csv"))
+    if not cache.exists():
+        return False
+    here = Path(__file__).resolve().parents[1]
+    deps = [paths.gt_path(wall), paths.image_path(wall), baseline.DIR / "parameters.json",
+            here / "candidates.py", here / "superpixels.py", here / "evaluate.py", Path(__file__)]
+    return cache.stat().st_mtime > max(Path(d).stat().st_mtime for d in deps)
+
+
+def main(walls=None, replot=False, force=False):
+    """Pool the sweep over every wall in dataset/. A wall whose cached sweep is up to date is not recomputed,
+    so adding a wall only costs that wall; force=True recomputes everything."""
     if replot:
         rows = load_rows()
         walls = sorted({r["wall"] for r in rows})
     else:
-        tasks = [(w, a, s) for w in walls for a in ALGOS for s in SIZES]
-        t0 = time.time()
-        with Pool(8) as pool:
-            rows = [r for rs in pool.imap_unordered(run_one, tasks) for r in rs]
-        print(f"{len(tasks)} runs, {len(rows)} detector evaluations, {time.time() - t0:.0f}s")
-
-    allw = "all_walls"
-    if not replot:
+        walls = walls or paths.synthetic_walls()
+        stale = [w for w in walls if force or not is_fresh(w)]
+        rows = []
+        if stale:
+            tasks = [(w, a, s) for w in stale for a in ALGOS for s in SIZES]
+            t0 = time.time()
+            with Pool(8) as pool:
+                new = [r for rs in pool.imap_unordered(run_one, tasks) for r in rs]
+            print(f"computed {', '.join(stale)}: {len(tasks)} runs, {len(new)} evaluations, {time.time() - t0:.0f}s")
+            for w in stale:
+                write_csv(paths.out_path(w, "sweep.csv"), [r for r in new if r["wall"] == w])
+        else:
+            print("all walls up to date, nothing recomputed")
         for w in walls:
-            with open(paths.out_path(w, "sweep.csv"), "w", newline="") as f:
-                wr = csv.DictWriter(f, fieldnames=list(rows[0]))
-                wr.writeheader()
-                wr.writerows([r for r in rows if r["wall"] == w])
-        with open(paths.out_path(allw, "sweep_all.csv"), "w", newline="") as f:
-            wr = csv.DictWriter(f, fieldnames=list(rows[0]))
-            wr.writeheader()
-            wr.writerows(rows)
+            rows += read_csv(paths.out_path(w, "sweep.csv"))
+        write_csv(paths.out_path("all_walls", "sweep_all.csv"), rows)
+    allw = "all_walls"
 
     # ---- pooled over the walls -------------------------------------------------------------
     acc = pooled(rows)
@@ -220,4 +239,4 @@ def main(walls=WALLS, replot=False):
 
 if __name__ == "__main__":
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    main(args or WALLS, replot="--replot" in sys.argv)
+    main(args or None, replot="--replot" in sys.argv, force="--force" in sys.argv)

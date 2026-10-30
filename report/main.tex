@@ -276,8 +276,13 @@ settings. \texttt{output.json} is the final result (type, $x,y,z$, roll, pitch, 
 copy. The pooled sweep and the plots are in \texttt{outputs/all\_walls/}.
 \item Run one wall: \texttt{python3 outputs/synthetic\_wall1/scripts/run.py}. Optional arguments:
 \texttt{--marker M} (marker side, m), \texttt{--stereo-height H}, \texttt{--stereo-distance D}, \texttt{--thresh T}
-(default 40), \texttt{--min-sat S} (default 118), \texttt{--sweep}. A new wall needs a new \texttt{dataset/<wall>/}
-folder and a copy of a \texttt{run.py}. The report builds with \texttt{pdflatex main.tex} (twice) in \texttt{report/}.
+(default 40), \texttt{--min-sat S} (default 118), \texttt{--no-pooled}, \texttt{--force}. Every run also refreshes
+\texttt{outputs/all\_walls/} (the sweep pooled over all walls in \texttt{dataset/}); only walls whose inputs changed
+are recomputed, so a new wall costs about a minute and a rerun without changes 15~s (\texttt{--force} recomputes all,
+\texttt{--no-pooled} skips it). A new wall: add \texttt{dataset/<wall>/} (with \texttt{scene.json}, image, optional stereo
+files), run \texttt{python3 src/pipelines/new\_wall.py <wall>} to create its \texttt{run.py}, then run that file. The wall is
+scored with the baseline values in \texttt{baseline/parameters.json}, which the sweep never changes, so that score is a
+held-out result; but the pooled plots and tables include the wall from then on. The report builds with \texttt{pdflatex main.tex} (twice) in \texttt{report/}.
 \item Needs \texttt{opencv-contrib-python}, \texttt{numpy}, \texttt{matplotlib}.
 \end{itemize}
 

@@ -24,7 +24,7 @@ def main():
         shutil.copy(paths.out_path("all_walls", f), FIG / f)
     # detections on the three synthetic walls, side by side, same height
     tiles = []
-    for w in ("synthetic_wall1", "synthetic_wall2", "synthetic_wall3"):
+    for w in paths.synthetic_walls():
         im = cv2.imread(paths.out_path(w, "detections.png"))
         tiles.append(cv2.resize(im, (int(im.shape[1] * 700 / im.shape[0]), 700), interpolation=cv2.INTER_AREA))
     cv2.imwrite(str(FIG / "detections.jpg"), np.hstack(tiles), [cv2.IMWRITE_JPEG_QUALITY, 88])
