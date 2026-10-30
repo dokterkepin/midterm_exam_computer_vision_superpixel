@@ -7,6 +7,7 @@ table and the ROC / sensitivity plots go to outputs/all_walls/.
 usage: python3 experiments.py [wall ...] [--force] [--replot]      (default: every synthetic wall in dataset/)
 """
 import csv
+import json
 import sys
 import time
 from multiprocessing import Pool
@@ -30,7 +31,7 @@ ALGOS = ("slic", "lsc", "seeds")
 SIZES = [3, 4, 5, 6, 8, 10, 14]            # superpixel side in pixels at the working resolution
 THRESH = list(range(10, 105, 5))           # contrast threshold: the ROC parameter
 _W, _C = baseline.P["working_resolution"], baseline.P["candidates"]
-SATS = (0.0, float(_C["min_saturation"]))   # saturation floor: off / baseline
+SATS = (0.0, 118.0)                        # saturation floor: off / on (the grid; the baseline should be on it)
 TARGET_PX_PER_M = _W["px_per_m"]
 SCALE = _W["hold_scale"]                   # hold size relative to a ~22 px hold at the working resolution
 WINDOW = max(21, int(_C["window_at_scale1"] * SCALE))
@@ -119,13 +120,25 @@ def write_csv(path, rows):
         wr.writerows(rows)
 
 
+def fingerprint():
+    """Everything in parameters.json that changes the sweep's numbers. The baseline pick itself (contrast
+    threshold, saturation floor, superpixel size) is deliberately left out: those are points on the swept
+    grid, so moving the baseline does not change any sweep result."""
+    fixed = {k: v for k, v in baseline.P["candidates"].items()
+             if k not in ("contrast_threshold", "min_saturation", "note")}
+    return json.dumps(dict(working=[_W["px_per_m"], _W["hold_scale"]], candidates=fixed,
+                           grid=dict(algos=ALGOS, sizes=SIZES, thresh=THRESH, sats=SATS)), sort_keys=True)
+
+
 def is_fresh(wall):
-    """The wall's cached sweep (outputs/<wall>/sweep.csv) is newer than everything it depends on."""
+    """The wall's cached sweep (outputs/<wall>/sweep.csv) is newer than its inputs and the code, and was made
+    with the same sweep settings."""
     cache = Path(paths.out_path(wall, "sweep.csv"))
-    if not cache.exists():
+    meta = Path(paths.out_path(wall, "sweep_inputs.json"))
+    if not cache.exists() or not meta.exists() or meta.read_text() != fingerprint():
         return False
     here = Path(__file__).resolve().parents[1]
-    deps = [paths.gt_path(wall), paths.image_path(wall), baseline.DIR / "parameters.json",
+    deps = [paths.gt_path(wall), paths.image_path(wall),
             here / "candidates.py", here / "superpixels.py", here / "evaluate.py", Path(__file__)]
     return cache.stat().st_mtime > max(Path(d).stat().st_mtime for d in deps)
 
@@ -148,6 +161,7 @@ def main(walls=None, replot=False, force=False):
             print(f"computed {', '.join(stale)}: {len(tasks)} runs, {len(new)} evaluations, {time.time() - t0:.0f}s")
             for w in stale:
                 write_csv(paths.out_path(w, "sweep.csv"), [r for r in new if r["wall"] == w])
+                Path(paths.out_path(w, "sweep_inputs.json")).write_text(fingerprint())
         else:
             print("all walls up to date, nothing recomputed")
         for w in walls:
@@ -208,8 +222,14 @@ def main(walls=None, replot=False, force=False):
                        label=f"{algo.upper()} (size {best_size[algo]})")
         ax[k].set(xlabel="false positives (all 3 walls)", ylabel="recall (true positive rate)",
                   title=title + " (threshold 10-100)", xlim=(0, xmax), ylim=(0, 0.9))
-    base = acc[(BASELINE["algo"], BASELINE["size"], BASELINE["thresh"], BASELINE["min_sat"])]
-    ax[1].plot(base["fp"], base["tp"] / base["n"], "k*", ms=12, label="baseline (SLIC 5, T=40)")
+    key = (BASELINE["algo"], BASELINE["size"], BASELINE["thresh"], BASELINE["min_sat"])
+    on_grid = key in acc
+    if on_grid:
+        base = acc[key]
+        ax[1].plot(base["fp"], base["tp"] / base["n"], "k*", ms=12,
+                   label=f"baseline ({BASELINE['algo'].upper()} {BASELINE['size']}, T={BASELINE['thresh']})")
+    else:
+        print(f"WARNING: the baseline {key} is not on the sweep grid; its pooled score is not in the sweep")
     for algo in ALGOS:
         ax[2].plot(SIZES, [best(algo, s, 118.0)[0] for s in SIZES], "o-", color=col[algo], label=algo.upper())
     ax[2].set(xlabel="superpixel size (px at 370 px/m)", ylabel="best F1 over thresholds",
@@ -222,19 +242,21 @@ def main(walls=None, replot=False, force=False):
     fig.savefig(fig_file, dpi=150)
     print("saved", fig_file)
 
-    # sensitivity to the contrast threshold at the baseline size, SLIC
-    fig, ax = plt.subplots(figsize=(5.2, 3.6))
-    ts = THRESH
-    tp = [acc[("slic", BASELINE["size"], T, 118.0)]["tp"] for T in ts]
-    fp = [acc[("slic", BASELINE["size"], T, 118.0)]["fp"] for T in ts]
-    ax.plot(ts, tp, "o-", label=f"true positives (of {n_gt})")
-    ax.plot(ts, fp, "s-", label="false positives")
-    ax.axvline(BASELINE["thresh"], color="k", ls=":", label="baseline T=40")
-    ax.set(xlabel="contrast threshold T", ylabel="holds (all walls)", title="SLIC, size 5, saturation floor 118")
-    ax.grid(alpha=.3)
-    ax.legend(fontsize=8)
-    fig.tight_layout()
-    fig.savefig(paths.out_path(allw, "threshold_sensitivity.png"), dpi=150)
+    # sensitivity to the contrast threshold at the baseline's algorithm and size
+    if on_grid:
+        fig, ax = plt.subplots(figsize=(5.2, 3.6))
+        alg, size, sat = BASELINE["algo"], BASELINE["size"], BASELINE["min_sat"]
+        tp = [acc[(alg, size, T, sat)]["tp"] for T in THRESH]
+        fp = [acc[(alg, size, T, sat)]["fp"] for T in THRESH]
+        ax.plot(THRESH, tp, "o-", label=f"true positives (of {n_gt})")
+        ax.plot(THRESH, fp, "s-", label="false positives")
+        ax.axvline(BASELINE["thresh"], color="k", ls=":", label=f"baseline T={BASELINE['thresh']}")
+        ax.set(xlabel="contrast threshold T", ylabel="holds (all walls)",
+               title=f"{alg.upper()}, size {size}, saturation floor {sat:.0f}")
+        ax.grid(alpha=.3)
+        ax.legend(fontsize=8)
+        fig.tight_layout()
+        fig.savefig(paths.out_path(allw, "threshold_sensitivity.png"), dpi=150)
 
 
 if __name__ == "__main__":
