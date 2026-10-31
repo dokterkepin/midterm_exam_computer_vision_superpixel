@@ -162,8 +162,8 @@ degrades at 14~px, where a superpixel is as large as the hold.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.52\linewidth]{threshold_sensitivity.png}
-\caption{Sensitivity to the contrast threshold (SLIC, 5~px, saturation floor 118, all walls).}
+\includegraphics[width=\linewidth]{threshold_sensitivity.png}
+\caption{Sensitivity to the contrast threshold, each algorithm at its own baseline size and saturation floor (all walls).}
 \label{fig:thr}
 \end{figure}
 
@@ -262,27 +262,34 @@ parameter selection.
 \item \texttt{dataset/<wall>/}: \texttt{image.png} (or \texttt{wall.png}), \texttt{scene.json} (ground truth, synthetic
 walls only, used for scoring and for the marker size), \texttt{stereo.png}, \texttt{camera.json} (stereo height and
 distance in meters, read from the simulator page; they are not in \texttt{scene.json}).
-\item \texttt{src/}: \texttt{candidates.py}, \texttt{superpixels.py}, \texttt{orientation.py}, \texttt{baseline.py} (loads the baseline values), \texttt{stereo.py}, \texttt{evaluate.py}, \texttt{paths.py}; \texttt{src/pipelines/}:
-\texttt{run\_synthetic}, \texttt{run\_stereo}, \texttt{run\_final} (merge into \texttt{output.json}),
-\texttt{experiments} (the sweep; \texttt{--replot} redraws from the saved csv), \texttt{make\_template},
-\texttt{make\_yaw\_examples}, \texttt{make\_report\_figures}, \texttt{run\_images} and \texttt{demo\_superpixels}.
-\item \texttt{baseline/}: everything that defines the baseline. \texttt{parameters.json} holds all tuning values
-(working resolution 370~px/m, hold scale 0.6, SLIC region, contrast threshold 40, saturation floor 118, size limits,
-stereo and yaw settings); the code reads them from there. \texttt{yaw\_template.png} is the template,
-\texttt{yaw\_template\_source.png} the hold it was cut from, and \texttt{yaw\_examples.png} shows the template matched
-to every scored hold.
-\item \texttt{outputs/<wall>/}: results of one wall, with its own \texttt{scripts/run.py} that holds that wall's
-settings. \texttt{output.json} is the final result (type, $x,y,z$, roll, pitch, yaw); \texttt{main\_view.json} is a debug
-copy. The pooled sweep and the plots are in \texttt{outputs/all\_walls/}.
-\item Run one wall: \texttt{python3 outputs/synthetic\_wall1/scripts/run.py}. Optional arguments:
-\texttt{--marker M} (marker side, m), \texttt{--stereo-height H}, \texttt{--stereo-distance D}, \texttt{--thresh T}
-(default 40), \texttt{--min-sat S} (default 118), \texttt{--no-pooled}, \texttt{--force}. Every run also refreshes
-\texttt{outputs/all\_walls/} (the sweep pooled over all walls in \texttt{dataset/}); only walls whose inputs changed
-are recomputed, so a new wall costs about a minute and a rerun without changes 15~s (\texttt{--force} recomputes all,
-\texttt{--no-pooled} skips it). A new wall: add \texttt{dataset/<wall>/} (with \texttt{scene.json}, image, optional stereo
-files), run \texttt{python3 src/pipelines/new\_wall.py <wall>} to create its \texttt{run.py}, then run that file. The wall is
-scored with the baseline values in \texttt{baseline/parameters.json}, which the sweep never changes, so that score is a
-held-out result; but the pooled plots and tables include the wall from then on. The report builds with \texttt{pdflatex main.tex} (twice) in \texttt{report/}.
+\item \texttt{src/}: \texttt{candidates.py}, \texttt{superpixels.py}, \texttt{orientation.py}, \texttt{baseline.py} (loads the baseline values), \texttt{stereo.py}, \texttt{evaluate.py} (matching and scoring), \texttt{paths.py}; \texttt{src/pipelines/}:
+\texttt{run\_all} (the whole chain), \texttt{experiments} (the sweep and the per-algorithm best settings; \texttt{--replot}
+redraws from the saved csv), \texttt{run\_wall} (one wall, all three algorithms), \texttt{run\_synthetic},
+\texttt{run\_stereo}, \texttt{run\_final} (merge into \texttt{output.json} and score), \texttt{make\_template},
+\texttt{make\_yaw\_examples}, \texttt{make\_report\_figures}, \texttt{new\_wall}, \texttt{run\_images} and
+\texttt{demo\_superpixels} (real photographs).
+\item \texttt{baseline/}: everything that defines the baseline. \texttt{parameters.json} holds the fixed design values
+(working resolution 370~px/m, hold scale 0.6, size limits, stereo and yaw settings). \texttt{algorithms.json} is written
+by the sweep: for each of SLIC, LSC and SEEDS its best superpixel size, contrast threshold and saturation floor (pooled
+F1, ties to fewer false positives, then to a stable threshold plateau), and the best algorithm.
+\texttt{yaw\_template.png} is the template, \texttt{yaw\_template\_source.png} the hold it was cut from, and
+\texttt{yaw\_examples.png} shows the template matched to every scored hold.
+\item \texttt{outputs/<wall>/}: one wall. \texttt{sweep.csv} is its part of the sweep; \texttt{slic/}, \texttt{lsc/} and
+\texttt{seeds/} hold the full result of each algorithm at its own baseline: \texttt{output.json} (type, $x,y,z$, roll,
+pitch, yaw), \texttt{score.json} (scored against \texttt{scene.json}), \texttt{main\_view.json} (debug copy),
+detection, mask, superpixel and stereo images. \texttt{outputs/all\_walls/} holds the pooled sweep and the plots.
+\item Everything: \texttt{python3 src/pipelines/run\_all.py}: sweep $\rightarrow$ pick each algorithm's best settings
+$\rightarrow$ run every wall with every algorithm $\rightarrow$ a table comparing the three algorithms (about 1~min;
+\texttt{--keep-baseline} skips picking the best settings, \texttt{--force} recomputes the whole sweep).
+\item One wall: \texttt{python3 outputs/synthetic\_wall1/scripts/run.py}. Optional arguments: \texttt{--algo A}
+(default: all three), \texttt{--marker M} (marker side, m), \texttt{--stereo-height H}, \texttt{--stereo-distance D},
+\texttt{--thresh T} and \texttt{--min-sat S} (override the baseline), \texttt{--no-pooled}, \texttt{--force}. It also
+refreshes \texttt{outputs/all\_walls/}; only walls whose inputs changed are recomputed. It never changes
+\texttt{algorithms.json}. A new wall: add \texttt{dataset/<wall>/} (with \texttt{scene.json}, image, optional stereo
+files), run \texttt{python3 src/pipelines/new\_wall.py <wall>} to create its \texttt{run.py}, then run that file. The
+wall is scored with the frozen baseline, so that score is a held-out result; but the pooled plots and tables include
+the wall from then on, and \texttt{run\_all.py} would let it into the choice of best settings. The report builds with
+\texttt{pdflatex main.tex} (twice) in \texttt{report/}.
 \item Needs \texttt{opencv-contrib-python}, \texttt{numpy}, \texttt{matplotlib}.
 \end{itemize}
 

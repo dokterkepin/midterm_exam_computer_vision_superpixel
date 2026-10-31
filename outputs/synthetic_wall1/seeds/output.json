@@ -1,0 +1,93 @@
+[
+ {
+  "type": "#F2554E",
+  "position": {
+   "x": -0.883,
+   "y": 0.812,
+   "z": 0.027
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": -1.152
+  }
+ },
+ {
+  "type": "#6389ED",
+  "position": {
+   "x": 1.9,
+   "y": 1.089,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": 0.0
+  }
+ },
+ {
+  "type": "#F2554E",
+  "position": {
+   "x": -2.111,
+   "y": 1.169,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": 0.733
+  }
+ },
+ {
+  "type": "#F2554E",
+  "position": {
+   "x": -1.352,
+   "y": 1.667,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": 0.733
+  }
+ },
+ {
+  "type": "#6389ED",
+  "position": {
+   "x": -0.857,
+   "y": 1.923,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": -0.052
+  }
+ },
+ {
+  "type": "#59C77B",
+  "position": {
+   "x": 1.961,
+   "y": 3.196,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": 0.89
+  }
+ },
+ {
+  "type": "#6389ED",
+  "position": {
+   "x": 0.165,
+   "y": 3.31,
+   "z": 0.0
+  },
+  "orientation": {
+   "roll": 0.0,
+   "pitch": 0.0,
+   "yaw": 0.838
+  }
+ }
+]

@@ -1,0 +1,70 @@
+{
+ "wall": "synthetic_wall2",
+ "n_gt": 7,
+ "found": 5,
+ "fp": 2,
+ "missed": [
+  "hold_3",
+  "hold_5"
+ ],
+ "holds": [
+  {
+   "hold": "hold_1",
+   "pos_err_cm": 1.2400467773435184,
+   "type_ok": true,
+   "yaw_err_deg": 8.995437383553934,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_2",
+   "pos_err_cm": 0.12440257232067156,
+   "type_ok": true,
+   "yaw_err_deg": 74.97737166237854,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_4",
+   "pos_err_cm": 0.4231818167171099,
+   "type_ok": true,
+   "yaw_err_deg": 87.00894985026738,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_6",
+   "pos_err_cm": 1.9124051453601383,
+   "type_ok": true,
+   "yaw_err_deg": 68.99527136291334,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_7",
+   "pos_err_cm": 1.057391833711601,
+   "type_ok": true,
+   "yaw_err_deg": 86.97445779100053,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  }
+ ],
+ "algo": "lsc",
+ "settings": {
+  "region_px": 3,
+  "contrast_threshold": 15,
+  "min_saturation": 0.0,
+  "pooled": {
+   "tp": 20,
+   "fp": 3,
+   "n_gt": 27,
+   "f1": 0.8
+  }
+ },
+ "stereo_pairs": 6
+}

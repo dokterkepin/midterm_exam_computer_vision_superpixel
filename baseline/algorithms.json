@@ -1,0 +1,44 @@
+{
+  "best_algorithm": "slic",
+  "rule": "per algorithm, the (size, threshold, saturation floor) with the highest pooled F1; ties go to fewer false positives, then to the higher mean F1 of the two neighbouring thresholds (a stable plateau). The best algorithm is the best of the three by the same rule.",
+  "chosen_on": [
+    "synthetic_wall1",
+    "synthetic_wall2",
+    "synthetic_wall3"
+  ],
+  "algorithms": {
+    "slic": {
+      "region_px": 5,
+      "contrast_threshold": 40,
+      "min_saturation": 118.0,
+      "pooled": {
+        "tp": 18,
+        "fp": 0,
+        "n_gt": 27,
+        "f1": 0.8
+      }
+    },
+    "lsc": {
+      "region_px": 3,
+      "contrast_threshold": 15,
+      "min_saturation": 0.0,
+      "pooled": {
+        "tp": 20,
+        "fp": 3,
+        "n_gt": 27,
+        "f1": 0.8
+      }
+    },
+    "seeds": {
+      "region_px": 3,
+      "contrast_threshold": 30,
+      "min_saturation": 118.0,
+      "pooled": {
+        "tp": 18,
+        "fp": 2,
+        "n_gt": 27,
+        "f1": 0.766
+      }
+    }
+  }
+}

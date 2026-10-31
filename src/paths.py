@@ -44,8 +44,12 @@ def synthetic_walls():
                   if (p / "scene.json").exists() and ((p / "image.png").exists() or (p / "wall.png").exists()))
 
 
-def out_path(wall, filename):
-    """Path inside outputs/<wall>/ (mirrors dataset/<wall>/), creating the folder if needed."""
-    d = OUT / wall
-    d.mkdir(parents=True, exist_ok=True)
-    return str(d / filename)
+def out_path(wall, *parts):
+    """Path inside outputs/<wall>/ (mirrors dataset/<wall>/), creating the folder if needed.
+
+    out_path(wall, "sweep.csv") is shared by the wall; out_path(wall, algo, "output.json") belongs to
+    one superpixel algorithm (outputs/<wall>/<algo>/).
+    """
+    p = OUT.joinpath(wall, *parts)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return str(p)

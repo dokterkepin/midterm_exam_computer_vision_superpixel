@@ -1,0 +1,23 @@
+red marker 1.0 m, about 183.6 px/m near the image origin; image resized x2.02
+SEEDS size 3 (403489 superpixels), contrast threshold 30, saturation floor 118
+TP=5 FP=2 FN=2   missed: ['hold_3', 'hold_5']
+wrote outputs/synthetic_wall2/seeds/ (7 detections)
+synthetic_wall2: eye 1874x328, camera height 0.7 m distance 2.0 m; blobs left=6 right=4
+matched 3 left/right pairs
+
+hold      est (x, y, z) m            true (x, y, z) m           error cm (x, y, z)
+hold_4   (-0.002, 1.501,-0.012)   (-0.004, 1.498, 0.000)   (  0.1,  0.2, -1.2)
+hold_2   (-0.191, 1.290, 0.043)   (-0.197, 1.305, 0.000)   (  0.6, -1.6,  4.3)
+hold_6   (-2.020, 0.445,-0.021)   (-1.986, 0.451, 0.000)   ( -3.4, -0.6, -2.1)
+
+mean abs error cm: x=1.4 y=0.8 z=2.5
+
+stereo depth error at 2.0 m is about 14.4 cm: too large, z = 0 (flat on the wall)
+wrote outputs/synthetic_wall2/seeds/output.json: 7 holds, z from stereo for 0
+
+hold      pos err   type   yaw err   z err   note
+  hold_1    1.3 cm  ok       9.0 deg   0.0 cm  
+  hold_2    0.4 cm  ok      78.0 deg   0.0 cm  
+  hold_4    0.3 cm  ok      87.0 deg   0.0 cm  
+  hold_6    2.0 cm  ok      69.0 deg   0.0 cm  
+  hold_7    0.9 cm  ok      87.0 deg   0.0 cm  

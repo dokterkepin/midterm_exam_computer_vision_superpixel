@@ -148,8 +148,11 @@ def hold_candidates(img, labels, thresh=50.0, window=61, open_k=3, min_area=80,
         area = int(stats[i, cv2.CC_STAT_AREA])
         if not min_area <= area <= max_area:
             continue
-        region = cc == i
-        cnts, _ = cv2.findContours(region.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # work inside the blob's bounding box only (a full-image mask per blob dominated the run time)
+        bx, by, bw, bh = (int(v) for v in stats[i, :4])
+        region = cc[by:by + bh, bx:bx + bw] == i
+        cnts, _ = cv2.findContours(region.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE,
+                                   offset=(bx, by))
         c = max(cnts, key=cv2.contourArea)
         solidity = cv2.contourArea(c) / max(cv2.contourArea(cv2.convexHull(c)), 1)
         (_, _), (w, h), ang = cv2.minAreaRect(c)
@@ -164,16 +167,17 @@ def hold_candidates(img, labels, thresh=50.0, window=61, open_k=3, min_area=80,
         if edge_deg is not None:
             long_deg = edge_deg
         # colour: hue/saturation of the most saturated half of the blob's pixels
-        s = hsv[..., 1][region]
+        box = hsv[by:by + bh, bx:bx + bw]
+        s = box[..., 1][region]
         top = region.copy()
         top[region] = s >= np.median(s)
-        sat = float(np.median(hsv[..., 1][top]))
+        sat = float(np.median(box[..., 1][top]))
         if sat < min_sat:
             continue
         blobs.append({
             "centroid": tuple(float(v) for v in cent[i]), "area": area,
             "bbox": tuple(int(v) for v in stats[i, :4]),
             "solidity": float(solidity), "aspect": float(aspect), "long_deg": float(long_deg),
-            "hue": float(np.median(hsv[..., 0][top])), "sat": sat,
+            "hue": float(np.median(box[..., 0][top])), "sat": sat,
         })
     return mask, blobs

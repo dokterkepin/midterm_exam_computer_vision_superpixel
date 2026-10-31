@@ -1,6 +1,7 @@
-"""Detect holds in both eyes of a stereo PNG, triangulate them, and score against scene.json.
+"""Detect holds in both eyes of a stereo PNG with one superpixel algorithm, triangulate them, and score
+against scene.json. Writes outputs/<wall>/<algo>/stereo_output.json and stereo_detections.png.
 
-usage: python3 scripts/run_stereo.py [name] [thresh] [min_sat] [height_m] [distance_m]
+usage: python3 run_stereo.py [wall] [algo]      (settings of that algorithm from baseline/algorithms.json)
 """
 import json
 import sys
@@ -11,12 +12,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 import cv2
 import numpy as np
 
-import candidates as cand
 import baseline
 import evaluate as ev
 import paths
 import stereo
-import superpixels as sp
+from pipelines import run_synthetic
 
 
 def fundamental(P0, P1):
@@ -27,27 +27,27 @@ def fundamental(P0, P1):
     return skew @ P1 @ np.linalg.pinv(P0)
 
 
-_W, _S, _C, _T = (baseline.P[k] for k in ("working_resolution", "superpixels", "candidates", "stereo"))
-TARGET_PX_PER_M = _W["px_per_m"]     # resolution the detector was tuned at (see run_synthetic.py)
-SCALE_AT_TARGET = _W["hold_scale"]
+_T = baseline.P["stereo"]
 
 
-def detect(eye_img, up, thresh, min_sat):
+def detect(eye_img, up, algo, size, thresh, min_sat):
     """Detect holds in one eye after resizing it by `up`; returned pixels are in the eye's own image."""
     big = cv2.resize(eye_img, None, fx=up, fy=up, interpolation=cv2.INTER_CUBIC if up > 1 else cv2.INTER_AREA)
-    scale = SCALE_AT_TARGET
-    labels, _ = sp.slic(big, region_size=max(3, round(_S["region_at_scale1"] * scale)))
-    _, blobs = cand.hold_candidates(big, labels, thresh=thresh, window=max(21, int(_C["window_at_scale1"] * scale)),
-                                    open_k=_C["open_kernel"], min_area=_C["min_area_at_scale1"] * scale ** 2,
-                                    max_area=_C["max_area_at_scale1"] * scale ** 2, max_aspect=_T["max_aspect"],
-                                    min_solidity=_C["min_solidity"], min_sat=min_sat)
+    _, _, blobs = run_synthetic.detect(big, algo, size, thresh, min_sat, max_aspect=_T["max_aspect"])
     for b in blobs:
         b["centroid"] = tuple(v / up for v in b["centroid"])
         b["bbox"] = tuple(round(v / up) for v in b["bbox"])
     return blobs
 
 
-def main(name="synthetic_wall1", thresh=_C["contrast_threshold"], min_sat=_C["min_saturation"], height=None, distance=None):
+def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None, height=None, distance=None):
+    """algo defaults to the best algorithm; size / thresh / min_sat default to that algorithm's baseline.
+    height / distance: stereo camera position in metres; None = from camera.json."""
+    s = baseline.settings(algo)
+    algo = algo or baseline.best_algorithm()
+    size = size if size is not None else s["region_px"]
+    thresh = thresh if thresh is not None else s["contrast_threshold"]
+    min_sat = min_sat if min_sat is not None else s["min_saturation"]
     img = cv2.imread(paths.stereo_path(name))
     if height is None or distance is None:                       # fill what is not given from camera.json
         cam = json.load(open(paths.camera_path(name)))["stereo"]
@@ -57,8 +57,8 @@ def main(name="synthetic_wall1", thresh=_C["contrast_threshold"], min_sat=_C["mi
     gt = ev.load_gt(paths.gt_path(name))
     rig = stereo.StereoRig(img.shape[1], img.shape[0], cam["height_m"], cam["distance_m"])
     left, right = rig.split(img)
-    up = TARGET_PX_PER_M / (rig.f / cam["distance_m"])         # eye pixels per metre at the wall -> working resolution
-    bl, br = detect(left, up, thresh, min_sat), detect(right, up, thresh, min_sat)
+    up = run_synthetic.TARGET_PX_PER_M / (rig.f / cam["distance_m"])   # eye pixels per metre at the wall -> working resolution
+    bl, br = (detect(eye, up, algo, size, thresh, min_sat) for eye in (left, right))
     print(f"{name}: eye {left.shape[1]}x{left.shape[0]}, camera height {cam['height_m']} m "
           f"distance {cam['distance_m']} m; blobs left={len(bl)} right={len(br)}")
 
@@ -102,20 +102,17 @@ def main(name="synthetic_wall1", thresh=_C["contrast_threshold"], min_sat=_C["mi
         e = np.abs(np.array(errs))
         print(f"\nmean abs error cm: x={e[:, 0].mean():.1f} y={e[:, 1].mean():.1f} z={e[:, 2].mean():.1f}")
 
-    json.dump(out, open(paths.out_path(name, "stereo_output.json"), "w"), indent=1)
+    json.dump(out, open(paths.out_path(name, algo, "stereo_output.json"), "w"), indent=1)
     vis = img.copy()
     off = img.shape[1] - left.shape[1]
     for a, b, _ in pairs:
         for blob, dx in ((a, 0), (b, off)):
             x, y, w, h = blob["bbox"]
             cv2.rectangle(vis, (x + dx - 4, y - 4), (x + dx + w + 4, y + h + 4), (0, 200, 0), 2)
-    cv2.imwrite(paths.out_path(name, "stereo_detections.png"), vis)
+    cv2.imwrite(paths.out_path(name, algo, "stereo_detections.png"), vis)
     return {"holds": out, "distance_m": distance, "focal_px": rig.f}
 
 
 if __name__ == "__main__":
     a = sys.argv[1:]
-    main(*(a[:1] or ["synthetic_wall1"]), **({"thresh": float(a[1])} if len(a) > 1 else {}),
-         **({"min_sat": float(a[2])} if len(a) > 2 else {}),
-         **({"height": float(a[3])} if len(a) > 3 else {}),
-         **({"distance": float(a[4])} if len(a) > 4 else {}))
+    main(*(a[:1] or ["synthetic_wall1"]), *a[1:2])

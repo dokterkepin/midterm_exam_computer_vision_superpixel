@@ -1,4 +1,6 @@
-"""Run SLIC, LSC and SEEDS on each image and save border overlays to outputs/superpixels/."""
+"""Run SLIC, LSC and SEEDS on an image as it is (no resizing) and save border overlays to
+outputs/<wall>/<algo>/superpixels.png. Used for the real photographs; the synthetic walls get theirs from
+run_synthetic.py, at the working resolution and baseline size."""
 import sys
 import time
 from pathlib import Path
@@ -10,26 +12,18 @@ import cv2
 import paths
 import superpixels as sp
 
-IMAGES = ["synthetic_wall1", "wall1", "wall2"]
+IMAGES = ["wall1", "wall2"]
 
 
-def main(images):
+def main(images, region=25):
     for name in images:
         img = cv2.imread(paths.image_path(name))
-        # region size relative to image: synthetic holds are tiny, real ones larger
-        region = 12 if name.startswith("synthetic") else 25
-        n_seeds = (img.shape[0] * img.shape[1]) // (region * region)
-        runs = {
-            "slic": lambda: sp.slic(img, region_size=region),
-            "lsc": lambda: sp.lsc(img, region_size=region),
-            "seeds": lambda: sp.seeds(img, num_superpixels=n_seeds),
-        }
-        for algo, fn in runs.items():
+        for algo in sp.ALGOS:
             t = time.time()
-            labels, n = fn()
+            labels = sp.segment(algo, img, region)
             dt = time.time() - t
-            cv2.imwrite(paths.out_path(name, f"superpixels_{algo}.png"), sp.boundaries(img, labels))
-            print(f"{name:20s} {algo:6s} n={n:6d}  {dt:5.2f}s")
+            cv2.imwrite(paths.out_path(name, algo, "superpixels.png"), sp.boundaries(img, labels))
+            print(f"{name:20s} {algo:6s} n={labels.max() + 1:6d}  {dt:5.2f}s")
 
 
 if __name__ == "__main__":

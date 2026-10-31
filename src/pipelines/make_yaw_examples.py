@@ -1,6 +1,7 @@
-"""Draw baseline/yaw_examples.png: for every detected hold on the synthetic walls, its silhouette (white), the
-best-matching rotated template (red outline), and the true / estimated yaw. Needs main_view.json of each wall
-(run the wall's scripts/run.py first). Also saves the training hold the template was cut from."""
+"""Draw baseline/yaw_examples.png: for every hold the best algorithm detected on the synthetic walls, its
+silhouette (white), the best-matching rotated template (red outline), and the true / estimated yaw. Needs
+outputs/<wall>/<best algo>/main_view.json (run the wall's scripts/run.py first). Also saves the training
+hold the template was cut from."""
 import json
 import sys
 from pathlib import Path
@@ -15,8 +16,6 @@ import evaluate as ev
 import orientation as ori
 import paths
 
-WALLS = paths.synthetic_walls()
-TEMPLATE_HOLD = ("synthetic_wall3", "hold_8")
 
 
 def tile(img, d, gt, template):
@@ -39,12 +38,13 @@ def tile(img, d, gt, template):
 
 def main():
     tpl = ori.load_template()
+    algo = baseline.best_algorithm()
     tiles = []
-    for w in WALLS:
+    for w in paths.synthetic_walls():
         img = cv2.imread(paths.image_path(w))
         gt = ev.load_gt(paths.gt_path(w))
-        for d in sorted(json.load(open(paths.out_path(w, "main_view.json"))), key=lambda d: d["id"]):
-            if d["matches_gt"] is None or (w, d["matches_gt"]) == TEMPLATE_HOLD:
+        for d in sorted(json.load(open(paths.out_path(w, algo, "main_view.json"))), key=lambda d: d["id"]):
+            if d["matches_gt"] is None or (w, d["matches_gt"]) == ori.TEMPLATE_SOURCE:
                 continue
             r = tile(img, d, gt[d["matches_gt"]], tpl)
             if r is None:
@@ -60,13 +60,14 @@ def main():
     sheet = np.vstack([np.hstack(tiles[i:i + cols]) for i in range(0, len(tiles), cols)])
     cv2.imwrite(str(baseline.DIR / "yaw_examples.png"), sheet)
     # the hold the template was cut from, with the template beside it
-    d = [d for d in json.load(open(paths.out_path(TEMPLATE_HOLD[0], "main_view.json"))) if d["matches_gt"] == TEMPLATE_HOLD[1]][0]
-    img = cv2.imread(paths.image_path(TEMPLATE_HOLD[0]))
+    wall, hold = ori.TEMPLATE_SOURCE
+    d = [d for d in json.load(open(paths.out_path(wall, algo, "main_view.json"))) if d["matches_gt"] == hold][0]
+    img = cv2.imread(paths.image_path(wall))
     x, y, h = d["pixel"][0], d["pixel"][1], int(d["size_px"] * 1.2)
     crop = cv2.resize(img[y - h:y + h, x - h:x + h], (256, 256), interpolation=cv2.INTER_CUBIC)
     cv2.imwrite(str(baseline.DIR / "yaw_template_source.png"), np.hstack([crop, cv2.cvtColor(
         cv2.resize(tpl * 255, (256, 256), interpolation=cv2.INTER_NEAREST), cv2.COLOR_GRAY2BGR)]))
-    print(f"{len(tiles)} tiles -> {baseline.DIR}")
+    print(f"{len(tiles)} yaw tiles ({algo}) -> {baseline.DIR}")
 
 
 if __name__ == "__main__":

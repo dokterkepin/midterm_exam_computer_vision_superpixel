@@ -4,14 +4,7 @@
     "hold_scale": 0.6,
     "note": "every image is resized to px_per_m (measured from the red marker); hold_scale multiplies the size limits below (1.0 = a ~22 px hold)"
   },
-  "superpixels": {
-    "algorithm": "slic",
-    "region_at_scale1": 8,
-    "note": "region = round(8 * 0.6) = 5 px; best of SLIC / LSC / SEEDS by pooled F1 (outputs/all_walls)"
-  },
   "candidates": {
-    "contrast_threshold": 40,
-    "min_saturation": 118,
     "window_at_scale1": 61,
     "min_area_at_scale1": 80,
     "max_area_at_scale1": 1500,
@@ -19,7 +12,7 @@
     "min_solidity": 0.85,
     "open_kernel": 3,
     "match_gate_m": 0.10,
-    "note": "contrast_threshold and min_saturation are the two tuned values; the rest follow from the working resolution"
+    "note": "fixed for every algorithm; the per-algorithm values (superpixel size, contrast threshold, saturation floor) are picked by the sweep and stored in algorithms.json"
   },
   "marker": {
     "default_m": 1.0,
@@ -27,12 +20,13 @@
   },
   "yaw": {
     "template": "yaw_template.png",
+    "template_source": ["synthetic_wall3", "hold_8"],
     "canvas": 128,
     "area": 2400,
     "work_width": 56,
     "angle_step_deg": 3,
     "shifts_px": [-3, 0, 3],
-    "note": "template = silhouette of synthetic_wall3 hold_8 at yaw 0 (excluded from the yaw scores)"
+    "note": "template = silhouette of template_source at yaw 0 (excluded from the yaw scores)"
   },
   "stereo": {
     "max_aspect": 3.5,

@@ -17,6 +17,7 @@ CANVAS = _Y["canvas"]                  # square canvas for template and silhouet
 AREA = float(_Y["area"])               # silhouette area (px^2) both are normalised to
 WORK_WIDTH = _Y["work_width"]          # hold width (px) the crop is resized to before segmentation
 TEMPLATE_FILE = baseline.DIR / _Y["template"]
+TEMPLATE_SOURCE = tuple(_Y["template_source"])   # (wall, hold id) the template was cut from: not scored
 
 
 def silhouette(img, cx, cy, size):

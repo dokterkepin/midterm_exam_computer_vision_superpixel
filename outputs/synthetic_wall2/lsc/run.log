@@ -1,0 +1,26 @@
+red marker 1.0 m, about 183.6 px/m near the image origin; image resized x2.02
+LSC size 3 (718565 superpixels), contrast threshold 15, saturation floor 0
+TP=5 FP=2 FN=2   missed: ['hold_3', 'hold_5']
+wrote outputs/synthetic_wall2/lsc/ (7 detections)
+synthetic_wall2: eye 1874x328, camera height 0.7 m distance 2.0 m; blobs left=7 right=8
+matched 6 left/right pairs
+
+hold      est (x, y, z) m            true (x, y, z) m           error cm (x, y, z)
+hold_7   ( 1.456, 2.107, 0.011)   ( 1.452, 2.109, 0.000)   (  0.3, -0.2,  1.1)
+UNMATCHED ( 0.097, 1.624,-0.028)
+hold_4   (-0.003, 1.510,-0.030)   (-0.004, 1.498, 0.000)   (  0.0,  1.2, -3.0)
+hold_2   (-0.193, 1.296, 0.025)   (-0.197, 1.305, 0.000)   (  0.4, -1.0,  2.5)
+hold_1   ( 2.367, 0.691, 0.006)   ( 2.357, 0.695, 0.000)   (  1.0, -0.4,  0.6)
+hold_6   (-2.009, 0.446,-0.010)   (-1.986, 0.451, 0.000)   ( -2.3, -0.5, -1.0)
+
+mean abs error cm: x=0.8 y=0.6 z=1.6
+
+stereo depth error at 2.0 m is about 14.4 cm: too large, z = 0 (flat on the wall)
+wrote outputs/synthetic_wall2/lsc/output.json: 7 holds, z from stereo for 0
+
+hold      pos err   type   yaw err   z err   note
+  hold_1    1.2 cm  ok       9.0 deg   0.0 cm  
+  hold_2    0.1 cm  ok      75.0 deg   0.0 cm  
+  hold_4    0.4 cm  ok      87.0 deg   0.0 cm  
+  hold_6    1.9 cm  ok      69.0 deg   0.0 cm  
+  hold_7    1.1 cm  ok      87.0 deg   0.0 cm  

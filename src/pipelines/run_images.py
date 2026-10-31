@@ -1,4 +1,5 @@
-"""Run the hold detector in pixel space on images without ground truth.
+"""Run the hold detector (SLIC) in pixel space on images without ground truth -> outputs/<name>/slic/detections.png.
+Preliminary: the real walls have no calibration or tuned baseline yet.
 
 usage: python3 run_images.py name scale thresh [max_aspect] [min_solidity]
 
@@ -31,7 +32,7 @@ def main(name, scale, thresh, max_aspect=2.5, min_solidity=0.85):
         x, y, w, h = b["bbox"]
         col = colours[ev.classify_colour(b["hue"])]
         cv2.rectangle(vis, (x - 3, y - 3), (x + w + 3, y + h + 3), col, 2)
-    cv2.imwrite(paths.out_path(name, "detections.png"), vis)
+    cv2.imwrite(paths.out_path(name, "slic", "detections.png"), vis)
 
 
 if __name__ == "__main__":
