@@ -1,0 +1,62 @@
+{
+  "best_algorithm": "lsc",
+  "rule": "per algorithm, the (size, threshold, saturation floor, shape limits) with the highest F1 on the labels wall; ties go to fewer false positives, then to the higher mean F1 of the two neighbouring thresholds.",
+  "chosen_on": "wall2",
+  "tested_on": "wall1",
+  "algorithms": {
+    "slic": {
+      "region_px": 4,
+      "contrast_threshold": 55,
+      "min_saturation": 60.0,
+      "shape": "real",
+      "tuning": {
+        "tp": 70,
+        "fp": 16,
+        "n_gt": 100,
+        "f1": 0.753
+      },
+      "test": {
+        "tp": 57,
+        "fp": 20,
+        "n_gt": 100,
+        "f1": 0.644
+      }
+    },
+    "lsc": {
+      "region_px": 5,
+      "contrast_threshold": 70,
+      "min_saturation": 60.0,
+      "shape": "real",
+      "tuning": {
+        "tp": 71,
+        "fp": 10,
+        "n_gt": 100,
+        "f1": 0.785
+      },
+      "test": {
+        "tp": 62,
+        "fp": 12,
+        "n_gt": 100,
+        "f1": 0.713
+      }
+    },
+    "seeds": {
+      "region_px": 4,
+      "contrast_threshold": 50,
+      "min_saturation": 60.0,
+      "shape": "real",
+      "tuning": {
+        "tp": 65,
+        "fp": 14,
+        "n_gt": 100,
+        "f1": 0.726
+      },
+      "test": {
+        "tp": 60,
+        "fp": 12,
+        "n_gt": 100,
+        "f1": 0.698
+      }
+    }
+  }
+}

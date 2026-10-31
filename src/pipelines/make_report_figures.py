@@ -45,6 +45,17 @@ def main():
         crops.append(cv2.resize(over, None, fx=5, fy=5, interpolation=cv2.INTER_NEAREST))
     cv2.imwrite(str(FIG / "superpixels.jpg"), np.hstack(crops), [cv2.IMWRITE_JPEG_QUALITY, 92])
 
+    # real walls: grid calibration, ROC of the real sweep, and wall1 with the best real algorithm at its synthetic
+    # baseline (top) and its real-wall baseline (bottom); the wall occupies rows 70-640 of the photo
+    shutil.copy(paths.out_path("real_walls", "roc_real.png"), FIG / "roc_real.png")
+    cv2.imwrite(str(FIG / "real_calibration.jpg"), cv2.imread(paths.out_path("wall1", "calibration.png"))[70:640],
+                [cv2.IMWRITE_JPEG_QUALITY, 88])
+    with open(baseline.DIR / "algorithms_real.json") as f:
+        real = json.load(f)["best_algorithm"]
+    pair = [cv2.imread(paths.out_path("wall1", real, f))[70:640]
+            for f in ("detections_synthetic_baseline.png", "detections.png")]
+    cv2.imwrite(str(FIG / "real_detections.jpg"), np.vstack(pair), [cv2.IMWRITE_JPEG_QUALITY, 88])
+
 
 if __name__ == "__main__":
     main()

@@ -18,6 +18,25 @@
     "default_m": 1.0,
     "note": "1 m on walls at least 2 m wide, 0.1 m on narrower ones; scene.json states it"
   },
+  "grid": {
+    "spacing_m": 0.2,
+    "blackhat_kernel_px": 11,
+    "dot_contrast": 30,
+    "max_dot_area_px": 40,
+    "max_dot_width_px": 8,
+    "max_board_std": 8,
+    "tolerance_cells": 0.15,
+    "reach_cells": 2,
+    "note": "real walls: calibration from the bolt-hole grid (20 cm, from the handout); dot sizes are for photos ~1280 px wide; tolerance and reach are in grid cells"
+  },
+  "real_walls": {
+    "hold_size_m": 0.12,
+    "synthetic_hold_size_m": 0.035,
+    "labels_wall": "wall2",
+    "real_shape": {"min_hold_m": 0.035, "max_hold_m": 0.40, "max_aspect": 5.0, "min_solidity": 0.6},
+    "colour_radius_px": 6,
+    "note": "photos are resized so a typical real hold (hold_size_m) is as many pixels as a synthetic hold (synthetic_hold_size_m) at the working resolution, so the synthetic pixel settings keep their meaning; real_shape = size/shape limits for real holds (the synthetic ones fit only the simulator's single hold model)"
+  },
   "yaw": {
     "template": "yaw_template.png",
     "template_source": ["synthetic_wall3", "hold_8"],

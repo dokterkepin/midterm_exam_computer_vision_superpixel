@@ -1,13 +1,17 @@
-"""Everything for wall2 (real photo, no ground truth): settings here, logic in src/pipelines/."""
+"""Everything for wall2 (real photo): grid calibration, then SLIC, LSC and SEEDS at their frozen real-wall baselines
+(baseline/algorithms_real.json) into outputs/wall2/<algo>/, scored against the hand-labelled holds where labelled.
+
+usage: python3 run.py      (to re-tune the real-wall baselines: python3 src/pipelines/sweep_real.py --save-best)
+"""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from pipelines import demo_superpixels, run_images
+from pipelines import calibrate_grid, run_real
 
 WALL = "wall2"
 
 if __name__ == "__main__":
-    demo_superpixels.main([WALL])
-    run_images.main(WALL, scale=1.0, thresh=45.0, max_aspect=3.5, min_solidity=0.75)
+    calibrate_grid.main(WALL)                  # 20 cm bolt-hole grid -> pixel-to-metre homography
+    run_real.run(WALL)                         # type, position, orientation with each algorithm
