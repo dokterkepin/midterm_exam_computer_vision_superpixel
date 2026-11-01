@@ -1,0 +1,29 @@
+{
+  "grid": {
+    "spacing_m": 0.2,
+    "blackhat_kernel_px": 11,
+    "dot_contrast": 30,
+    "max_dot_area_px": 40,
+    "max_dot_width_px": 8,
+    "max_board_std": 8,
+    "tolerance_cells": 0.15,
+    "reach_cells": 2,
+    "note": "calibration from the bolt-hole grid (20 cm, from the handout); dot sizes are for photos ~1280 px wide; tolerance and reach are in grid cells"
+  },
+  "detection": {
+    "px_per_m": 108,
+    "window_px": 36,
+    "open_kernel": 3,
+    "match_gate_m": 0.1,
+    "real_shape": {
+      "min_hold_m": 0.035,
+      "max_hold_m": 0.4,
+      "max_aspect": 5.0,
+      "min_solidity": 0.6
+    },
+    "labels_wall": "real_wall2",
+    "colour_radius_px": 6,
+    "note": "everything the real wall photos use besides the sweep's grid and real_wall_algorithm.json. Photos are resized to px_per_m (a typical 12 cm hold is then 13 px, which suits the superpixel sizes, window and kernel in pixels); real_shape = size/shape limits of a hold in metres; labels_wall = the photo whose holds are hand-labelled (the sweep tunes on it), test_wall = the photo the chosen settings are tested on",
+    "test_wall": "real_wall1"
+  }
+}

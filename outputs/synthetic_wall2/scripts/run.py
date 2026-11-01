@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from pipelines import run_wall
+from pipelines.synthetic_wall import run_wall
 
 if __name__ == "__main__":
     run_wall.cli("synthetic_wall2")

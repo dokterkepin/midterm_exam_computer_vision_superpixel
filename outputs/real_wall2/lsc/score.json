@@ -1,0 +1,61 @@
+{
+ "wall": "real_wall2",
+ "algo": "lsc",
+ "holds_output": 83,
+ "settings": {
+  "region_px": 5,
+  "contrast_threshold": 65,
+  "min_saturation": 60.0,
+  "tuning": {
+   "tp": 70,
+   "fp": 13,
+   "n_gt": 100,
+   "f1": 0.765
+  },
+  "test": {
+   "tp": 60,
+   "fp": 14,
+   "n_gt": 100,
+   "f1": 0.69
+  }
+ },
+ "found": 70,
+ "fp": 13,
+ "n_gt": 100,
+ "f1": 0.765,
+ "type_ok": 53,
+ "pos_err_cm": 3.78,
+ "missed": [
+  "hold_0",
+  "hold_1",
+  "hold_10",
+  "hold_12",
+  "hold_13",
+  "hold_17",
+  "hold_19",
+  "hold_22",
+  "hold_24",
+  "hold_28",
+  "hold_31",
+  "hold_35",
+  "hold_41",
+  "hold_45",
+  "hold_46",
+  "hold_49",
+  "hold_57",
+  "hold_62",
+  "hold_68",
+  "hold_71",
+  "hold_73",
+  "hold_74",
+  "hold_75",
+  "hold_76",
+  "hold_78",
+  "hold_79",
+  "hold_80",
+  "hold_81",
+  "hold_83",
+  "hold_91"
+ ],
+ "labels": "hand-labelled holds of real_wall2, scored inside its photo's region"
+}

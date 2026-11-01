@@ -100,7 +100,7 @@ only); the per-wall runners are in \texttt{src/pipelines/}.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{superpixels.jpg}
+\includegraphics[width=\linewidth]{synthetic_wall_superpixels.jpg}
 \caption{The same patch (a hold next to a pyramid, at the working resolution) under SLIC, LSC and SEEDS with size 5.
 SLIC cells are compact and follow the hold; LSC gives an almost regular grid; SEEDS gives irregular blocks.}
 \label{fig:sp}
@@ -137,7 +137,7 @@ where the other two produce 383k.}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{roc_and_sensitivity.png}
+\includegraphics[width=\linewidth]{synthetic_wall_roc_and_sensitivity.png}
 \caption{Left and middle: ROC curves obtained by sweeping the contrast threshold $T$ from 10 to 100, pooled over the
 three walls (curves: best recall reachable with at most $k$ false positives; faint dots: individual thresholds).
 Right: best F1 against the superpixel size.}
@@ -162,7 +162,7 @@ degrades at 14~px, where a superpixel is as large as the hold.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{threshold_sensitivity.png}
+\includegraphics[width=\linewidth]{synthetic_wall_threshold_sensitivity.png}
 \caption{Sensitivity to the contrast threshold, each algorithm at its own baseline size and saturation floor (all walls).}
 \label{fig:thr}
 \end{figure}
@@ -193,7 +193,7 @@ all & & 18 / 27 & 0 & 0.8 cm & 18 / 18 & 18$^\circ$ / 3$^\circ$ & 16 \\
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{detections.jpg}
+\includegraphics[width=\linewidth]{synthetic_wall_detections.jpg}
 \caption{Detections on the three walls (green: matched to a true hold; labels give the hold number). No false
 positives. Missed holds are visible as uncircled holds, e.g.\ the red holds on and beside the dark pyramid at the top left of wall~3.}
 \label{fig:det}
@@ -241,9 +241,10 @@ held-out test. A fresh scene should be scored with the settings frozen.
 %==========================================================================
 \section{Real climbing-wall photographs}
 \label{sec:real}
-The two photographs show the same wall: \texttt{wall1} the whole wall, \texttt{wall2} its left third from closer.
-They have no marker and no ground truth, so calibration, the transfer of the synthetic baseline and the evaluation all
-need their own solution.
+The two photographs show the same wall: \texttt{real\_wall1} the whole wall, \texttt{real\_wall2} its left third from closer.
+They have no marker and no ground truth, so calibration, settings and evaluation need their own solution. The real
+photographs share the code with the synthetic walls (superpixels, local contrast, blob filtering) and the sweep
+method, but none of the tuned values: they have their own settings, chosen once and tested once.
 
 \paragraph{Calibration from the 20~cm grid.}
 The plywood carries a regular grid of bolt holes (T-nuts), 20~cm apart according to the handout. I detect them as
@@ -252,88 +253,87 @@ from neighbouring dots, give the dots around one well-connected dot integer grid
 lattice: fit a homography from cells to pixels, accept dots that land on nearby predicted cells, drop dots the fit
 disagrees with, refit (Fig.~\ref{fig:realcal}). This bridges holds and the black panels, where no holes are visible,
 and rejects screw holes in holds and scratches. The origin is the bottom-left grid hole found ($x$ right, $y$ up,
-meters; the handout does not define one). The fit uses 420 holes on \texttt{wall1} (119~px/m) and 238 on
-\texttt{wall2} (193~px/m) with a median residual of 1~px (0.8 and 0.5~cm). As an independent check, distances
+meters; the handout does not define one). The fit uses 420 holes on \texttt{real\_wall1} (119~px/m) and 238 on
+\texttt{real\_wall2} (193~px/m) with a median residual of 1~px (0.8 and 0.5~cm). As an independent check, distances
 between the same four holds measured in the two photographs agree within 2.5~cm over 1.4--3.7~m, and both photos
 put the origin on the same hole.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{real_calibration.jpg}
-\caption{Grid calibration of \texttt{wall1}: fitted 20~cm grid (magenta), bolt holes used (green), origin and 1~m axes.}
+\includegraphics[width=\linewidth]{real_wall_calibration.jpg}
+\caption{Grid calibration of \texttt{real\_wall1}: fitted 20~cm grid (magenta), bolt holes used (green), origin and 1~m axes.}
 \label{fig:realcal}
 \end{figure}
 
-\paragraph{Transferring the synthetic baseline.}
-The detector's settings are in pixels, and what matters is the size of a hold in pixels. Synthetic holds are about
-3.5~cm wide, real holds mostly 5--30~cm, so each photo is resized until a typical real hold (12~cm) has the pixel size a
-synthetic hold has at 370~px/m (108~px/m); positions still come from the calibration. With its frozen synthetic
-baseline each algorithm finds only 8--23 of the labelled holds (F1 0.15--0.36, Table~\ref{tab:real}). The filters
-were made for the simulator's single hold model: the saturation floor 118 removes the many brown, white and grey holds,
-and the solidity, aspect and size limits remove irregular, elongated and large holds.
+\paragraph{Settings for the real photographs.}
+Real holds are 5--30~cm, the simulator's holds 3.5~cm, so the real photographs need their own scale and limits. Each
+photo is resized to 108~px/m, where a typical real hold (12~cm) is 13~px wide, which suits the superpixel sizes of the
+sweep (3--14~px), the 36~px contrast window and the 3~px cleaning kernel; positions still come from the calibration.
+The size and shape limits are in metres: holds of 3.5--40~cm, aspect ratio $\le 5$, solidity $\ge 0.6$. The sweep is
+the same as for the synthetic walls (three algorithms, seven sizes, 19 thresholds), with the saturation floor in
+\{0, 60, 118\}.
 
-\paragraph{Ground truth and real-wall sweep.}
-To tune and score at all, I labelled the 100 holds of \texttt{wall2} by eye (\texttt{dataset/wall2/labels.json}: pixel
+\paragraph{Ground truth and sweep.}
+To tune and score at all, I labelled the 100 holds of \texttt{real\_wall2} by eye (\texttt{dataset/real\_wall2/labels.json}: pixel
 position and color, about $\pm2.5$~cm; volumes are not holds). Both photos sit on the same grid, so the labels move
-into the \texttt{wall1} frame by a whole number of cells, found by letting every pair of detections vote (here no
-shift: both origins are the same hole). I then ran the synthetic sweep again on the real photos (same sizes and
-thresholds, saturation floor 0/60/118, and either the synthetic or ``real'' shape limits: holds 3.5--40~cm, aspect
-$\le 5$, solidity $\ge 0.6$), chose each algorithm's best setting on \texttt{wall2} with the synthetic rule, and
-tested it on \texttt{wall1}, a different photograph with a different scale and viewpoint, inside the region that
-\texttt{wall2} shows. Resizing for a 10 or 15~cm typical hold gave a lower F1 on \texttt{wall2} than 12~cm.
+into the \texttt{real\_wall1} frame by a whole number of cells, found by letting every pair of detections vote (here no
+shift: both origins are the same hole). Each algorithm's best setting is chosen on \texttt{real\_wall2} with the same rule
+as for the synthetic walls and then tested on \texttt{real\_wall1}, a different photograph with a different scale and
+viewpoint, inside the region that \texttt{real\_wall2} shows.
 
 \begin{table}[h]
 \centering\small
-\begin{tabular}{llcccc}
+\begin{tabular}{lcccccc}
 \toprule
-& & \multicolumn{2}{c}{\texttt{wall2} (tuning)} & \multicolumn{2}{c}{\texttt{wall1} (test)}\\
-Algorithm & setting (size, $T$, sat., shape) & found / FP & F1 & found / FP & F1\\
+& & \multicolumn{2}{c}{\texttt{real\_wall2} (tuning)} & \multicolumn{2}{c}{\texttt{real\_wall1} (test)}\\
+Algorithm & size, $T$, saturation & found / FP & F1 & found / FP & F1\\
 \midrule
-SLIC  & synthetic: 5, 40, 118, synthetic & 23 / 4 & 0.36 & 15 / 4 & 0.25 \\
-LSC   & synthetic: 3, 15, 0, synthetic   & 17 / 2 & 0.29 & 19 / 1 & 0.32 \\
-SEEDS & synthetic: 3, 30, 118, synthetic & 20 / 1 & 0.33 &  8 / 2 & 0.15 \\
-\midrule
-SLIC  & real: 4, 55, 60, real & 70 / 16 & 0.75 & 57 / 20 & 0.64 \\
-LSC   & real: 5, 70, 60, real & \textbf{71 / 10} & \textbf{0.78} & \textbf{62 / 12} & \textbf{0.71} \\
-SEEDS & real: 4, 50, 60, real & 65 / 14 & 0.73 & 60 / 12 & 0.70 \\
+SLIC  & 4, 60, 60 & 66 / 13 & 0.74 & 57 / 15 & 0.66 \\
+LSC   & 5, 65, 60 & \textbf{70 / 13} & \textbf{0.77} & \textbf{60 / 14} & \textbf{0.69} \\
+SEEDS & 3, 70, 60 & 65 / 14 & 0.73 & 53 / 13 & 0.64 \\
 \bottomrule
 \end{tabular}
-\caption{Real photographs, 100 labelled holds. ``found'' within 10~cm of a labelled hold.}
+\caption{Real photographs, 100 labelled holds, each algorithm at its best setting. ``found'' within 10~cm of a
+labelled hold.}
 \label{tab:real}
 \end{table}
 
 \paragraph{Results.}
-With real-wall settings all three algorithms reach F1 0.73--0.78 on the tuning photo and 0.64--0.71 on the test
-photo (Table~\ref{tab:real}, Fig.~\ref{fig:realroc}); LSC is best on both, and SEEDS is close to it on the test photo.
-All three choose the real shape limits and a saturation floor of 60. Found holds are on average 3.5--4.2~cm from the
-labelled position. The type of a hold is the nearest labelled color (prototypes measured on \texttt{wall2},
-lightness weighted half, on the more saturated half of the hold's pixels to leave out shadow and board); it agrees with
-my label for 76\% (\texttt{wall2}) and 79\% (\texttt{wall1}) of the holds found by LSC, mostly confusing brown, tan
-and yellow. The yaw is the direction of the hold's longest straight edge, mapped onto the wall; with no ground truth
-for it, it is not scored. On the whole of \texttt{wall1} LSC outputs 176 holds (Fig.~\ref{fig:realdet}).
+All three algorithms reach F1 0.73--0.77 on the tuning photo and 0.64--0.69 on the test photo
+(Table~\ref{tab:real}, Fig.~\ref{fig:realroc}); LSC is best on both, SLIC is close, SEEDS is last on the test photo.
+All three choose a saturation floor of 60, between ``off'' and the synthetic walls' 118, which would remove the
+many brown, white and grey holds. Found holds are on average 3.4--4.3~cm from the labelled position. The type of a
+hold is the nearest labelled color (prototypes measured on \texttt{real\_wall2}, lightness weighted half, on the more
+saturated half of the hold's pixels to leave out shadow and board); it agrees with my label for 76\%
+(\texttt{real\_wall2}) and 77\% (\texttt{real\_wall1}) of the holds found by LSC, mostly confusing brown, tan and yellow. The yaw is
+the direction of the hold's longest straight edge, mapped onto the wall; with no ground truth for it, it is not
+scored. On the whole of \texttt{real\_wall1} LSC outputs 170 holds (Fig.~\ref{fig:realdet}). The optimum is flat: changing the
+working scale by 0.1\% (107.9 to 108~px/m) moved each algorithm's best threshold by 5--20 and its F1 by up to 0.02 on
+the tuning photo and 0.06 on the test photo, so differences of a few hundredths between the algorithms are not
+significant.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\linewidth]{roc_real.png}
-\caption{ROC on the real photographs (threshold 10--100, each algorithm at its real-wall size, floor and shape limits).
-Stars: real-wall baselines; crosses: the frozen synthetic baselines.}
+\includegraphics[width=0.95\linewidth]{real_wall_roc.png}
+\caption{ROC on the real photographs (threshold 10--100, each algorithm at its size and saturation floor). Stars:
+the chosen settings.}
 \label{fig:realroc}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{real_detections.jpg}
-\caption{\texttt{wall1} with LSC. Top: synthetic baseline; bottom: real-wall baseline. Box color = hold type, red
-cross = false positive, yellow circle = labelled hold missed; the grey outline is the region \texttt{wall2} shows.}
+\includegraphics[width=\linewidth]{real_wall_detections.jpg}
+\caption{\texttt{real\_wall1} with LSC. Box color = hold type, red cross = false positive, yellow circle = labelled hold
+missed; the grey outline is the region \texttt{real\_wall2} shows.}
 \label{fig:realdet}
 \end{figure}
 
 \paragraph{Limits.}
 One photograph gives no depth: $z=0$ and roll $=$ pitch $=0$. Holds on volumes stand 20--40~cm off the wall, so their
-projection onto the wall plane moves with the viewpoint; most of the misses on \texttt{wall1} are such holds. Very
+projection onto the wall plane moves with the viewpoint; most of the misses on \texttt{real\_wall1} are such holds. Very
 large holds (the blue disc, the big slopers) exceed the size limit, and colors that were not labelled (white, teal,
 black) are given the nearest labelled color. The labels are mine and there is only one labelled photograph, so the
-test on \texttt{wall1} uses the same physical holds seen from another camera, not new holds.
+test on \texttt{real\_wall1} uses the same physical holds seen from another camera, not new holds.
 
 \begin{thebibliography}{9}\small
 \bibitem{slic} R.~Achanta et al., ``SLIC superpixels compared to state-of-the-art superpixel methods,'' IEEE TPAMI, 2012.
@@ -350,27 +350,32 @@ test on \texttt{wall1} uses the same physical holds seen from another camera, no
 \item \texttt{dataset/<wall>/}: \texttt{image.png} (or \texttt{wall.png}), \texttt{scene.json} (ground truth, synthetic
 walls only, used for scoring and for the marker size), \texttt{stereo.png}, \texttt{camera.json} (stereo height and
 distance in meters, read from the simulator page; they are not in \texttt{scene.json}).
-\item \texttt{src/}: \texttt{candidates.py}, \texttt{superpixels.py}, \texttt{orientation.py}, \texttt{baseline.py} (loads the baseline values), \texttt{stereo.py}, \texttt{evaluate.py} (matching and scoring), \texttt{paths.py}; \texttt{src/pipelines/}:
-\texttt{run\_all} (the whole chain), \texttt{experiments} (the sweep and the per-algorithm best settings; \texttt{--replot}
-redraws from the saved csv), \texttt{run\_wall} (one wall, all three algorithms), \texttt{run\_synthetic},
-\texttt{run\_stereo}, \texttt{run\_final} (merge into \texttt{output.json} and score), \texttt{make\_template},
-\texttt{make\_yaw\_examples}, \texttt{make\_report\_figures}, \texttt{new\_wall}; for the real photographs
-\texttt{src/grid\_calibration.py} and \texttt{src/real\_wall.py} with \texttt{calibrate\_grid}, \texttt{sweep\_real}
-and \texttt{run\_real}.
-\item \texttt{baseline/}: everything that defines the baseline. \texttt{parameters.json} holds the fixed design values
-(working resolution 370~px/m, hold scale 0.6, size limits, stereo and yaw settings). \texttt{algorithms.json} is written
-by the sweep: for each of SLIC, LSC and SEEDS its best superpixel size, contrast threshold and saturation floor (pooled
-F1, ties to fewer false positives, then to a stable threshold plateau), and the best algorithm.
-\texttt{algorithms\_real.json} is the same for the real photographs (written by \texttt{sweep\_real
---save-best}, chosen on \texttt{wall2}). \texttt{yaw\_template.png} is the template, \texttt{yaw\_template\_source.png} the hold it was cut from, and
-\texttt{yaw\_examples.png} shows the template matched to every scored hold.
-\item \texttt{outputs/<wall>/}: one wall. \texttt{sweep.csv} is its part of the sweep; \texttt{slic/}, \texttt{lsc/} and
-\texttt{seeds/} hold the full result of each algorithm at its own baseline: \texttt{output.json} (type, $x,y,z$, roll,
-pitch, yaw), \texttt{score.json} (scored against \texttt{scene.json}), \texttt{main\_view.json} (debug copy),
-detection, mask, superpixel and stereo images. \texttt{outputs/all\_walls/} holds the pooled sweep and the plots.
-For a real photo \texttt{outputs/<wall>/} also holds \texttt{calibration.json} and \texttt{calibration.png}, and each
-algorithm's folder the detections with both baselines; the real sweep and its ROC are in \texttt{outputs/real\_walls/}.
-\texttt{dataset/wall2/labels.json} holds the hand-labelled holds.
+\item \texttt{src/}: shared code in \texttt{shared/} (\texttt{paths}, \texttt{superpixels}, \texttt{candidates},
+\texttt{matching}); the synthetic walls in \texttt{synthetic\_wall/} (\texttt{baseline}, \texttt{calibration} from the red
+square, \texttt{evaluate}, \texttt{orientation}, \texttt{stereo}); the real walls in \texttt{real\_wall/}
+(\texttt{baseline}, \texttt{grid\_calibration}, \texttt{detection}). \texttt{src/pipelines/} holds the runnable scripts:
+\texttt{run\_all}, \texttt{make\_report\_figures}, \texttt{synthetic\_wall/} (\texttt{run\_all}, \texttt{sweep}: the sweep
+and the best settings per algorithm, \texttt{run\_wall}: one wall with all three algorithms, \texttt{detect},
+\texttt{stereo\_depth}, \texttt{final\_output}: merge into \texttt{output.json} and score, \texttt{new\_wall},
+\texttt{make\_template}, \texttt{make\_yaw\_examples}) and \texttt{real\_wall/} (\texttt{run\_all}, \texttt{calibrate\_grid},
+\texttt{sweep}, \texttt{run\_wall}).
+\item \texttt{baseline/}: everything that defines the baselines, one set per kind of wall. For the synthetic walls
+\texttt{synthetic\_wall\_parameters.json} holds the fixed design values (working resolution 370~px/m, hold scale 0.6,
+size limits, stereo and yaw settings) and \texttt{synthetic\_wall\_algorithm.json} is written by the sweep: for each of
+SLIC, LSC and SEEDS its best superpixel size, contrast threshold and saturation floor (pooled F1, ties to fewer false
+positives, then to a stable threshold plateau), and the best algorithm. \texttt{synthetic\_wall\_yaw\_template.png} is the
+yaw template, \texttt{synthetic\_wall\_yaw\_template\_source.png} the hold it was cut from, and
+\texttt{synthetic\_wall\_yaw\_examples.png} shows the template matched to every scored hold. For the real walls
+\texttt{real\_wall\_parameters.json} (grid calibration, scale, size limits) and \texttt{real\_wall\_algorithm.json}
+(written by \texttt{pipelines/real\_wall/sweep.py --save-best}, chosen on \texttt{real\_wall2}). The two kinds of wall
+share no tuned value.
+\item \texttt{outputs/<wall>/}: one wall. \texttt{sweep.csv} is its part of the synthetic sweep; \texttt{slic/},
+\texttt{lsc/} and \texttt{seeds/} hold the full result of each algorithm at its own baseline: \texttt{output.json} (type,
+$x,y,z$, roll, pitch, yaw), \texttt{score.json} (scored against \texttt{scene.json}, or the hand labels), \texttt{main\_view.json}
+(debug copy), detection, mask, superpixel and stereo images. A real wall also has \texttt{calibration.json} and
+\texttt{calibration.png}. \texttt{outputs/synthetic\_wall\_sweep/} holds the pooled sweep and its plots,
+\texttt{outputs/real\_wall\_sweep/} the real-wall sweep and its ROC. \texttt{dataset/real\_wall2/labels.json} holds the
+hand-labelled holds.
 \item Everything: \texttt{python3 src/pipelines/run\_all.py}: sweep $\rightarrow$ pick each algorithm's best settings
 $\rightarrow$ run every wall with every algorithm $\rightarrow$ a table comparing the three algorithms, then the
 same for the real photographs after their grid calibration (about 1~min;
@@ -378,9 +383,9 @@ same for the real photographs after their grid calibration (about 1~min;
 \item One wall: \texttt{python3 outputs/synthetic\_wall1/scripts/run.py}. Optional arguments: \texttt{--algo A}
 (default: all three), \texttt{--marker M} (marker side, m), \texttt{--stereo-height H}, \texttt{--stereo-distance D},
 \texttt{--thresh T} and \texttt{--min-sat S} (override the baseline), \texttt{--no-pooled}, \texttt{--force}. It also
-refreshes \texttt{outputs/all\_walls/}; only walls whose inputs changed are recomputed. It never changes
-\texttt{algorithms.json}. A new wall: add \texttt{dataset/<wall>/} (with \texttt{scene.json}, image, optional stereo
-files), run \texttt{python3 src/pipelines/new\_wall.py <wall>} to create its \texttt{run.py}, then run that file. The
+refreshes \texttt{outputs/synthetic\_wall\_sweep/}; only walls whose inputs changed are recomputed. It never changes
+\texttt{synthetic\_wall\_algorithm.json}. A new synthetic wall: add \texttt{dataset/<wall>/} (with \texttt{scene.json}, image, optional stereo
+files), run \texttt{python3 src/pipelines/synthetic\_wall/new\_wall.py <wall>} to create its \texttt{run.py}, then run that file. The
 wall is scored with the frozen baseline, so that score is a held-out result; but the pooled plots and tables include
 the wall from then on, and \texttt{run\_all.py} would let it into the choice of best settings. The report builds with
 \texttt{pdflatex main.tex} (twice) in \texttt{report/}.
