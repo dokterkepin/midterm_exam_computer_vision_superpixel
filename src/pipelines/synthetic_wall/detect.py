@@ -1,8 +1,12 @@
 """Detect holds in a synthetic wall screenshot with one superpixel algorithm (main view: type, x, y, yaw).
 
-Writes outputs/<wall>/<algo>/: main_view.json (detections), detections.png, mask.png, superpixels.jpg.
-usage: python3 detect.py [wall] [algo]      (settings of that algorithm from baseline/synthetic_wall_algorithm.json)
+Writes outputs/<wall>/<algo>/: main_view.json (detections), detections.png, mask.png, superpixels.jpg, and
+outputs/<wall>/calibration.npz (the red-square calibration).
+usage: python3 detect.py [wall] [algo] [--size S] [--thresh T] [--min-sat S] [--marker M]
+(settings of the algorithm from baseline/synthetic_wall_algorithm.json; with no arguments the values at the
+bottom of this file are used, so the editor's Run button works too)
 """
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -22,14 +26,13 @@ TARGET_PX_PER_M = _W["px_per_m"]
 SCALE = _W["hold_scale"]
 
 
-def to_working_resolution(orig, marker):
-    """Resize to TARGET_PX_PER_M using the red marker; returns (img, up, to_world) where to_world maps a
-    pixel of the resized image to wall metres."""
-    H = calibration.calibrate_homography(orig, square_m=marker)
+def to_working_resolution(orig, H):
+    """Resize to TARGET_PX_PER_M using the wall's homography H (pixel -> metres, from the red marker); returns
+    (img, up, to_world) where to_world maps a pixel of the resized image to wall metres."""
     px_per_m = 1.0 / np.linalg.norm(calibration.apply_homography(H, [[1, 0]]) - calibration.apply_homography(H, [[0, 0]]))
     up = TARGET_PX_PER_M / px_per_m
     img = cv2.resize(orig, None, fx=up, fy=up, interpolation=cv2.INTER_CUBIC if up > 1 else cv2.INTER_AREA)
-    print(f"red marker {marker} m, about {px_per_m:.1f} px/m near the image origin; image resized x{up:.2f}")
+    print(f"calibrated: about {px_per_m:.1f} px/m near the image origin; image resized x{up:.2f}")
     return img, up, lambda p: calibration.apply_homography(H, np.asarray(p, float) / up)[0]
 
 
@@ -43,9 +46,9 @@ def detect(img, algo, size, thresh, min_sat, max_aspect=_C["max_aspect"]):
     return labels, mask, blobs
 
 
-def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None, marker=None):
+def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None):
     """algo defaults to the best algorithm; size / thresh / min_sat default to that algorithm's baseline.
-    marker: red marker side in metres; None = from scene.json (1 m if it does not say)."""
+    The wall must be calibrated first (calibration.calibrate_wall; load_homography does it if the file is missing)."""
     s = baseline.settings(algo)
     algo = algo or baseline.best_algorithm()
     size = size if size is not None else s["region_px"]
@@ -54,8 +57,7 @@ def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None
 
     orig = cv2.imread(paths.image_path(name))
     gt = ev.load_gt(paths.gt_path(name))
-    marker = marker if marker is not None else ev.marker_size(paths.gt_path(name))
-    img, up, to_world = to_working_resolution(orig, marker)
+    img, up, to_world = to_working_resolution(orig, calibration.load_homography(name))
 
     labels, mask, blobs = detect(img, algo, size, thresh, min_sat)
     r = matching.match(blobs, gt, to_world, gate=_C["match_gate_m"])
@@ -101,5 +103,21 @@ def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None
 
 
 if __name__ == "__main__":
-    a = sys.argv[1:]
-    main(*(a[:1] or ["synthetic_wall1"]), *a[1:2])
+    # ---- Run-button settings: used when the command line gives none. None = the default ----
+    WALL = "synthetic_wall1"
+    ALGO = None          # "slic", "lsc" or "seeds"; None = the best algorithm
+    SIZE = None          # superpixel size in pixels; None = the algorithm's baseline
+    THRESH = None        # contrast threshold; None = baseline
+    MIN_SAT = None       # saturation floor; None = baseline
+    MARKER = None        # red square side in metres; None = from scene.json
+
+    ap = argparse.ArgumentParser(description="Detect holds in a synthetic wall with one superpixel algorithm.")
+    ap.add_argument("wall", nargs="?", default=WALL, help="wall folder name in dataset/")
+    ap.add_argument("algo", nargs="?", default=ALGO, choices=sp.ALGOS, help="superpixel algorithm (default: the best one)")
+    ap.add_argument("--size", type=int, default=SIZE, help="superpixel size in pixels (default: baseline)")
+    ap.add_argument("--thresh", type=float, default=THRESH, help="contrast threshold (default: baseline)")
+    ap.add_argument("--min-sat", type=float, default=MIN_SAT, help="saturation floor (default: baseline)")
+    ap.add_argument("--marker", type=float, default=MARKER, help="red square side in metres (default: scene.json)")
+    a = ap.parse_args()
+    calibration.calibrate_wall(a.wall, a.marker)
+    main(a.wall, a.algo, size=a.size, thresh=a.thresh, min_sat=a.min_sat)

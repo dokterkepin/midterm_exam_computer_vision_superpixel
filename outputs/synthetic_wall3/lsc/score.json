@@ -11,16 +11,16 @@
  "holds": [
   {
    "hold": "hold_2",
-   "pos_err_cm": 0.3567255527713153,
+   "pos_err_cm": 0.597840380034672,
    "type_ok": true,
-   "yaw_err_deg": 15.01149423242757,
+   "yaw_err_deg": 0.0,
    "z_err_cm": 0.0,
    "roll_pitch_err_deg": 0.0,
    "on_volume": false
   },
   {
    "hold": "hold_5",
-   "pos_err_cm": 0.1935599648687723,
+   "pos_err_cm": 0.4157468701024699,
    "type_ok": true,
    "yaw_err_deg": 5.993253128627436,
    "z_err_cm": 0.0,
@@ -29,7 +29,7 @@
   },
   {
    "hold": "hold_6",
-   "pos_err_cm": 0.32261415034061947,
+   "pos_err_cm": 0.5849956324623292,
    "type_ok": true,
    "yaw_err_deg": 0.0,
    "z_err_cm": 0.0,
@@ -38,7 +38,7 @@
   },
   {
    "hold": "hold_7",
-   "pos_err_cm": 0.3195287154544972,
+   "pos_err_cm": 0.45962876324268764,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680281,
    "z_err_cm": 0.0,
@@ -47,7 +47,7 @@
   },
   {
    "hold": "hold_8",
-   "pos_err_cm": 0.61153479050664,
+   "pos_err_cm": 0.39751075457149554,
    "type_ok": true,
    "yaw_err_deg": null,
    "z_err_cm": 0.0,
@@ -56,16 +56,16 @@
   },
   {
    "hold": "hold_9",
-   "pos_err_cm": 0.4208267101789031,
+   "pos_err_cm": 0.736787024858607,
    "type_ok": true,
-   "yaw_err_deg": 0.0,
+   "yaw_err_deg": 2.979380534680274,
    "z_err_cm": 0.0,
    "roll_pitch_err_deg": 0.0,
    "on_volume": false
   },
   {
    "hold": "hold_10",
-   "pos_err_cm": 0.42678614082465255,
+   "pos_err_cm": 0.2645494471738696,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680274,
    "z_err_cm": 0.0,
@@ -76,13 +76,13 @@
  "algo": "lsc",
  "settings": {
   "region_px": 3,
-  "contrast_threshold": 15,
+  "contrast_threshold": 10,
   "min_saturation": 0.0,
   "pooled": {
-   "tp": 20,
-   "fp": 3,
+   "tp": 19,
+   "fp": 1,
    "n_gt": 27,
-   "f1": 0.8
+   "f1": 0.809
   }
  },
  "stereo_pairs": 7

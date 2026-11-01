@@ -20,11 +20,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
 from pipelines.synthetic_wall import detect, final_output, stereo_depth, sweep
 from shared import paths, superpixels as sp
+from synthetic_wall import calibration
 from synthetic_wall import baseline
 
-def run_one(wall, algo, marker=None, stereo_height=None, stereo_distance=None, thresh=None, min_sat=None):
+def run_one(wall, algo, stereo_height=None, stereo_distance=None, thresh=None, min_sat=None):
     """Main view -> stereo -> final output and score of one wall with one algorithm."""
-    dets = detect.main(wall, algo, thresh=thresh, min_sat=min_sat, marker=marker)
+    dets = detect.main(wall, algo, thresh=thresh, min_sat=min_sat)
     st = None
     if (paths.DATASET / wall / "stereo.png").exists():
         st = stereo_depth.main(wall, algo, thresh=thresh, min_sat=min_sat, height=stereo_height, distance=stereo_distance)
@@ -41,8 +42,13 @@ def _logged(job):
 
 def run(walls, algos=sp.ALGOS, **kw):
     """Run every (wall, algorithm) in parallel; kw: marker, stereo_height, stereo_distance, and thresh / min_sat
-    to override the baseline (for trying values by hand)."""
-    jobs = [(w, a, kw) for w in ([walls] if isinstance(walls, str) else walls) for a in algos]
+    to override the baseline (for trying values by hand). Every wall is calibrated first (calibration.npz), once,
+    before the parallel runs."""
+    walls = [walls] if isinstance(walls, str) else list(walls)
+    marker = kw.pop("marker", None)
+    for w in walls:
+        calibration.calibrate_wall(w, marker)
+    jobs = [(w, a, kw) for w in walls for a in algos]
     with Pool(len(jobs)) as pool:
         for wall, algo, sc, dt in pool.imap_unordered(_logged, jobs):
             print(f"  {wall} / {algo}: {sc['found']}/{sc['n_gt']} found, {sc['fp']} FP  ({dt:.0f}s, "
@@ -76,22 +82,32 @@ def print_results():
     print("(* = the winning algorithm; each wall's numbers are in outputs/<wall>/<algo>/score.json)")
 
 
-def cli(wall):
-    ap = argparse.ArgumentParser(description=f"Run {wall} for every superpixel algorithm at its frozen baseline.")
+def cli(wall=None, algo=None, marker=None, stereo_height=None, stereo_distance=None, thresh=None, min_sat=None,
+        no_pooled=False, force=False):
+    """Command line of one wall's run. The keyword arguments are the values used when the command line gives none:
+    each wall's outputs/<wall>/scripts/run.py sets them at its top, so the file also works from the editor's
+    Run button. A command-line option overrides them."""
+    ap = argparse.ArgumentParser(description="Run a synthetic wall for every superpixel algorithm at its frozen baseline.")
+    ap.add_argument("wall", nargs="?", default=wall, help="wall folder name in dataset/ (default: the one set in the script)")
     ap.add_argument("--algo", choices=sp.ALGOS, action="append", help="only this algorithm (repeatable; default: all)")
-    ap.add_argument("--marker", type=float, help="red marker side in metres (default: scene.json, else 1)")
-    ap.add_argument("--stereo-height", type=float, help="stereo camera height in metres (default: camera.json)")
-    ap.add_argument("--stereo-distance", type=float, help="stereo camera distance to the wall in metres (default: camera.json)")
-    ap.add_argument("--thresh", type=float, help="contrast threshold (default: each algorithm's baseline)")
-    ap.add_argument("--min-sat", type=float, help="saturation floor (default: each algorithm's baseline)")
-    ap.add_argument("--no-pooled", action="store_true", help="skip updating the sweep over all walls (outputs/synthetic_wall_sweep/)")
-    ap.add_argument("--force", action="store_true", help="recompute the sweep of every wall, not only the changed ones")
+    ap.add_argument("--marker", type=float, default=marker, help="red marker side in metres (default: scene.json, else 1)")
+    ap.add_argument("--stereo-height", type=float, default=stereo_height, help="stereo camera height in metres (default: camera.json)")
+    ap.add_argument("--stereo-distance", type=float, default=stereo_distance, help="stereo camera distance to the wall in metres (default: camera.json)")
+    ap.add_argument("--thresh", type=float, default=thresh, help="contrast threshold (default: each algorithm's baseline)")
+    ap.add_argument("--min-sat", type=float, default=min_sat, help="saturation floor (default: each algorithm's baseline)")
+    ap.add_argument("--no-pooled", action="store_true", default=no_pooled, help="skip updating the sweep over all walls (outputs/synthetic_wall_sweep/)")
+    ap.add_argument("--force", action="store_true", default=force, help="recompute the sweep of every wall, not only the changed ones")
     a = ap.parse_args()
-    run(wall, tuple(a.algo or sp.ALGOS), marker=a.marker, stereo_height=a.stereo_height,
+    if not a.wall:
+        ap.error("no wall given: pass its name or set WALL in the script")
+    algos = a.algo or ([algo] if isinstance(algo, str) else algo) or sp.ALGOS
+    run(a.wall, tuple(algos), marker=a.marker, stereo_height=a.stereo_height,
         stereo_distance=a.stereo_distance, thresh=a.thresh, min_sat=a.min_sat)
     if not a.no_pooled:                                  # refresh outputs/synthetic_wall_sweep/; only changed walls are recomputed
         sweep.main(force=a.force)                  # never re-picks: the baseline stays frozen
 
 
 if __name__ == "__main__":
-    cli(sys.argv[1])
+    # ---- Run-button settings: used when the file is run without a wall on the command line ----
+    WALL = "synthetic_wall4"
+    cli(WALL)

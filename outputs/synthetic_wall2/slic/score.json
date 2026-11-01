@@ -1,18 +1,16 @@
 {
  "wall": "synthetic_wall2",
  "n_gt": 7,
- "found": 3,
- "fp": 0,
+ "found": 5,
+ "fp": 1,
  "missed": [
-  "hold_2",
   "hold_3",
-  "hold_4",
-  "hold_5"
+  "hold_4"
  ],
  "holds": [
   {
    "hold": "hold_1",
-   "pos_err_cm": 0.9585802053036644,
+   "pos_err_cm": 1.3809909521789152,
    "type_ok": true,
    "yaw_err_deg": 8.995437383553934,
    "z_err_cm": 0.0,
@@ -20,8 +18,26 @@
    "on_volume": false
   },
   {
+   "hold": "hold_2",
+   "pos_err_cm": 0.6700119401921139,
+   "type_ok": true,
+   "yaw_err_deg": 74.97737166237854,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_5",
+   "pos_err_cm": 2.5243014281182785,
+   "type_ok": true,
+   "yaw_err_deg": null,
+   "z_err_cm": 8.110299999999999,
+   "roll_pitch_err_deg": 59.88778328247466,
+   "on_volume": true
+  },
+  {
    "hold": "hold_6",
-   "pos_err_cm": 2.192809485568678,
+   "pos_err_cm": 2.2912558652407022,
    "type_ok": true,
    "yaw_err_deg": 68.99527136291334,
    "z_err_cm": 0.0,
@@ -30,7 +46,7 @@
   },
   {
    "hold": "hold_7",
-   "pos_err_cm": 0.8756697379720185,
+   "pos_err_cm": 0.9257955983909029,
    "type_ok": true,
    "yaw_err_deg": 86.97445779100053,
    "z_err_cm": 0.0,
@@ -40,14 +56,14 @@
  ],
  "algo": "slic",
  "settings": {
-  "region_px": 5,
+  "region_px": 8,
   "contrast_threshold": 40,
   "min_saturation": 118.0,
   "pooled": {
-   "tp": 18,
-   "fp": 0,
+   "tp": 20,
+   "fp": 1,
    "n_gt": 27,
-   "f1": 0.8
+   "f1": 0.833
   }
  },
  "stereo_pairs": 5

@@ -1,0 +1,30 @@
+calibrated: about 668.1 px/m near the image origin; image resized x0.55
+SLIC size 8 (3296 superpixels), contrast threshold 40, saturation floor 118
+TP=7 FP=0 FN=3   missed: ['hold_2', 'hold_8', 'hold_9']
+wrote outputs/synthetic_wall4/slic/ (7 detections)
+synthetic_wall4: eye 932x218, camera height 0.7 m distance 1.0 m; blobs left=10 right=9
+matched 8 left/right pairs
+
+hold      est (x, y, z) m            true (x, y, z) m           error cm (x, y, z)
+hold_9   (-0.295, 1.343,-0.048)   (-0.280, 1.313, 0.000)   ( -1.5,  3.0, -4.8)
+hold_7   ( 0.015, 1.217,-0.014)   ( 0.056, 1.192, 0.000)   ( -4.1,  2.5, -1.4)
+hold_5   (-0.084, 1.018, 0.025)   (-0.088, 1.028, 0.000)   (  0.4, -1.1,  2.5)
+hold_4   ( 0.084, 0.999,-0.015)   ( 0.082, 0.991, 0.000)   (  0.2,  0.9, -1.5)
+UNMATCHED ( 0.144, 0.692, 0.153)
+hold_6   ( 0.191, 0.345,-0.009)   ( 0.191, 0.350, 0.000)   (  0.1, -0.5, -0.9)
+UNMATCHED ( 0.003, 1.624, 3.394)
+hold_3   ( 0.246, 0.290, 0.057)   ( 0.262, 0.267, 0.000)   ( -1.6,  2.2,  5.7)
+
+mean abs error cm: x=1.3 y=1.7 z=2.8
+
+stereo depth error at 1.0 m is about 5.4 cm: too large, z = 0 (flat on the wall)
+wrote outputs/synthetic_wall4/slic/output.json: 7 holds, z from stereo for 0
+
+hold      pos err   type   yaw err   z err   note
+  hold_1    0.3 cm  ok      87.0 deg   0.0 cm  
+  hold_3    0.4 cm  ok       3.0 deg   0.0 cm  
+  hold_4    0.5 cm  ok      45.0 deg   0.0 cm  
+  hold_5    0.5 cm  ok       0.0 deg   0.0 cm  
+  hold_6    0.2 cm  ok       0.0 deg   0.0 cm  
+  hold_7    4.5 cm  ok      63.0 deg   0.0 cm  
+  hold_10   1.2 cm  ok       0.0 deg   0.0 cm  

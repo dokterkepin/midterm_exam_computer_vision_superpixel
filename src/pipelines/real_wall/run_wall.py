@@ -4,8 +4,9 @@ Each algorithm runs with its real-wall baseline (baseline/real_wall_algorithm.js
 outputs/<wall>/<algo>/: output.json (the answer: type, position, orientation), main_view.json (debug),
 detections.png, superpixels.jpg and score.json (against the hand-labelled holds, inside the labelled region). Position: the grid calibration (z = 0: one photo has no depth). Orientation: yaw = direction of
 the longest straight edge on the wall; roll = pitch = 0 (holds assumed flat on the wall).
-usage: python3 run_wall.py wall [algo ...]
+usage: python3 run_wall.py [wall] [algo ...]      (with no arguments the values at the bottom are used, so the editor's Run button works too)
 """
+import argparse
 import contextlib
 import json
 import sys
@@ -132,4 +133,12 @@ def print_results(results):
 
 
 if __name__ == "__main__":
-    run(sys.argv[1], tuple(sys.argv[2:]) or sp.ALGOS)
+    # ---- Run-button settings: used when the command line gives none ----
+    WALL = "real_wall1"
+    ALGOS = None          # e.g. ["lsc"] or ["slic", "seeds"]; None = all three
+
+    ap = argparse.ArgumentParser(description="Run a real wall photo with every superpixel algorithm.")
+    ap.add_argument("wall", nargs="?", default=WALL, help="wall folder name in dataset/ (calibrate it first)")
+    ap.add_argument("algos", nargs="*", choices=sp.ALGOS, help="algorithms to run (default: all)")
+    a = ap.parse_args()
+    run(a.wall, tuple(a.algos or ALGOS or sp.ALGOS))

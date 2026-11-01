@@ -8,36 +8,36 @@
   ],
   "algorithms": {
     "slic": {
-      "region_px": 5,
+      "region_px": 8,
       "contrast_threshold": 40,
       "min_saturation": 118.0,
       "pooled": {
-        "tp": 18,
-        "fp": 0,
+        "tp": 20,
+        "fp": 1,
         "n_gt": 27,
-        "f1": 0.8
+        "f1": 0.833
       }
     },
     "lsc": {
       "region_px": 3,
-      "contrast_threshold": 15,
+      "contrast_threshold": 10,
       "min_saturation": 0.0,
       "pooled": {
-        "tp": 20,
-        "fp": 3,
+        "tp": 19,
+        "fp": 1,
         "n_gt": 27,
-        "f1": 0.8
+        "f1": 0.809
       }
     },
     "seeds": {
       "region_px": 3,
       "contrast_threshold": 30,
-      "min_saturation": 118.0,
+      "min_saturation": 0.0,
       "pooled": {
-        "tp": 18,
-        "fp": 2,
+        "tp": 21,
+        "fp": 6,
         "n_gt": 27,
-        "f1": 0.766
+        "f1": 0.778
       }
     }
   }

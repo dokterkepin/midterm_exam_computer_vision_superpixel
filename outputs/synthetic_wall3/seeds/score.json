@@ -1,18 +1,16 @@
 {
  "wall": "synthetic_wall3",
  "n_gt": 10,
- "found": 6,
- "fp": 0,
+ "found": 8,
+ "fp": 1,
  "missed": [
   "hold_1",
-  "hold_3",
-  "hold_4",
-  "hold_10"
+  "hold_4"
  ],
  "holds": [
   {
    "hold": "hold_2",
-   "pos_err_cm": 0.2437480666589999,
+   "pos_err_cm": 0.5105811590726794,
    "type_ok": true,
    "yaw_err_deg": 8.995437383553925,
    "z_err_cm": 0.0,
@@ -20,8 +18,17 @@
    "on_volume": false
   },
   {
+   "hold": "hold_3",
+   "pos_err_cm": 9.276624255083306,
+   "type_ok": false,
+   "yaw_err_deg": null,
+   "z_err_cm": 8.0121,
+   "roll_pitch_err_deg": 72.33357250830639,
+   "on_volume": true
+  },
+  {
    "hold": "hold_5",
-   "pos_err_cm": 0.2568763515779539,
+   "pos_err_cm": 0.33398422118417614,
    "type_ok": true,
    "yaw_err_deg": 3.013872593947152,
    "z_err_cm": 0.0,
@@ -30,7 +37,7 @@
   },
   {
    "hold": "hold_6",
-   "pos_err_cm": 0.3142290406693818,
+   "pos_err_cm": 0.17629489499131845,
    "type_ok": true,
    "yaw_err_deg": 0.0,
    "z_err_cm": 0.0,
@@ -39,7 +46,7 @@
   },
   {
    "hold": "hold_7",
-   "pos_err_cm": 0.514838421254671,
+   "pos_err_cm": 0.2360902369857789,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680281,
    "z_err_cm": 0.0,
@@ -48,7 +55,7 @@
   },
   {
    "hold": "hold_8",
-   "pos_err_cm": 0.39751075457149554,
+   "pos_err_cm": 0.3306581316102779,
    "type_ok": true,
    "yaw_err_deg": null,
    "z_err_cm": 0.0,
@@ -57,9 +64,18 @@
   },
   {
    "hold": "hold_9",
-   "pos_err_cm": 0.24603885871951103,
+   "pos_err_cm": 0.2949154455093836,
    "type_ok": true,
-   "yaw_err_deg": 6.016056848873632,
+   "yaw_err_deg": 2.979380534680274,
+   "z_err_cm": 0.0,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
+   "hold": "hold_10",
+   "pos_err_cm": 0.2645494471738696,
+   "type_ok": true,
+   "yaw_err_deg": 2.979380534680274,
    "z_err_cm": 0.0,
    "roll_pitch_err_deg": 0.0,
    "on_volume": false
@@ -69,13 +85,13 @@
  "settings": {
   "region_px": 3,
   "contrast_threshold": 30,
-  "min_saturation": 118.0,
+  "min_saturation": 0.0,
   "pooled": {
-   "tp": 18,
-   "fp": 2,
+   "tp": 21,
+   "fp": 6,
    "n_gt": 27,
-   "f1": 0.766
+   "f1": 0.778
   }
  },
- "stereo_pairs": 5
+ "stereo_pairs": 8
 }

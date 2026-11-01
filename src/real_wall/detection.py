@@ -23,8 +23,9 @@ SHAPE = dict(min_area=(_S["min_hold_m"] * WORK_PX_PER_M) ** 2, max_area=(_S["max
 
 
 def calibration(wall):
-    with open(paths.out_path(wall, "calibration.json")) as f:
-        return json.load(f)
+    """The saved grid calibration of a wall photo (outputs/<wall>/calibration.npz, written by calibrate_grid.py)."""
+    with np.load(paths.out_path(wall, "calibration.npz")) as z:
+        return {k: z[k] for k in z.files}
 
 
 def prepare(wall):
@@ -32,7 +33,7 @@ def prepare(wall):
     cal = calibration(wall)
     H = np.array(cal["H_pixel_to_m"])
     orig = cv2.imread(paths.image_path(wall))
-    up = WORK_PX_PER_M / cal["px_per_m"]
+    up = WORK_PX_PER_M / float(cal["px_per_m"])
     img = cv2.resize(orig, None, fx=up, fy=up, interpolation=cv2.INTER_CUBIC if up > 1 else cv2.INTER_AREA)
     to_world = lambda p: cv2.perspectiveTransform(np.float32(p).reshape(-1, 1, 2) / up, H).reshape(-1, 2)[0].astype(float)
     return orig, img, up, to_world

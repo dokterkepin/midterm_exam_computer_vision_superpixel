@@ -1,8 +1,11 @@
 """Detect holds in both eyes of a stereo PNG with one superpixel algorithm, triangulate them, and score
 against scene.json. Writes outputs/<wall>/<algo>/stereo_output.json and stereo_detections.png.
 
-usage: python3 stereo_depth.py [wall] [algo]      (settings of that algorithm from baseline/synthetic_wall_algorithm.json)
+usage: python3 stereo_depth.py [wall] [algo] [--size S] [--thresh T] [--min-sat S] [--height H] [--distance D]
+(settings of the algorithm from baseline/synthetic_wall_algorithm.json; with no arguments the values at the
+bottom of this file are used, so the editor's Run button works too)
 """
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -13,7 +16,7 @@ import cv2
 import numpy as np
 
 from pipelines.synthetic_wall import detect as detect_main_view
-from shared import paths
+from shared import paths, superpixels as sp
 from synthetic_wall import baseline, evaluate as ev, stereo
 
 
@@ -112,5 +115,22 @@ def main(name="synthetic_wall1", algo=None, size=None, thresh=None, min_sat=None
 
 
 if __name__ == "__main__":
-    a = sys.argv[1:]
-    main(*(a[:1] or ["synthetic_wall1"]), *a[1:2])
+    # ---- Run-button settings: used when the command line gives none. None = the default ----
+    WALL = "synthetic_wall1"
+    ALGO = None          # "slic", "lsc" or "seeds"; None = the best algorithm
+    SIZE = None          # superpixel size in pixels; None = the algorithm's baseline
+    THRESH = None        # contrast threshold; None = baseline
+    MIN_SAT = None       # saturation floor; None = baseline
+    HEIGHT = None        # stereo camera height in metres; None = camera.json
+    DISTANCE = None      # stereo camera distance to the wall in metres; None = camera.json
+
+    ap = argparse.ArgumentParser(description="Stereo depth of the holds of a synthetic wall.")
+    ap.add_argument("wall", nargs="?", default=WALL, help="wall folder name in dataset/")
+    ap.add_argument("algo", nargs="?", default=ALGO, choices=sp.ALGOS, help="superpixel algorithm (default: the best one)")
+    ap.add_argument("--size", type=int, default=SIZE, help="superpixel size in pixels (default: baseline)")
+    ap.add_argument("--thresh", type=float, default=THRESH, help="contrast threshold (default: baseline)")
+    ap.add_argument("--min-sat", type=float, default=MIN_SAT, help="saturation floor (default: baseline)")
+    ap.add_argument("--height", type=float, default=HEIGHT, help="stereo camera height in metres (default: camera.json)")
+    ap.add_argument("--distance", type=float, default=DISTANCE, help="stereo camera distance in metres (default: camera.json)")
+    a = ap.parse_args()
+    main(a.wall, a.algo, size=a.size, thresh=a.thresh, min_sat=a.min_sat, height=a.height, distance=a.distance)

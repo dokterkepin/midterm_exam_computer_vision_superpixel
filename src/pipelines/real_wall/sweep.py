@@ -3,8 +3,9 @@ scored against the hand-labelled holds (tuned on the labels wall, tested on the 
 
 Writes outputs/real_wall_sweep/sweep.csv and roc.png; with --save-best each algorithm's best setting on the
 labels wall goes to baseline/real_wall_algorithm.json (the real walls' baseline, frozen until the next --save-best).
-usage: python3 sweep.py [--save-best]
+usage: python3 sweep.py [--save-best]      (with no options the value at the bottom is used, so the editor's Run button works too)
 """
+import argparse
 import csv
 import json
 import os
@@ -134,4 +135,10 @@ def main(save_best=False):
 
 
 if __name__ == "__main__":
-    main(save_best="--save-best" in sys.argv)
+    # ---- Run-button settings: used when the command line gives none ----
+    SAVE_BEST = False     # True = write the best settings to baseline/real_wall_algorithm.json
+
+    ap = argparse.ArgumentParser(description="Sweep the three algorithms on the real photos against the hand labels.")
+    ap.add_argument("--save-best", action="store_true", default=SAVE_BEST, help="write the best settings to the baseline file")
+    a = ap.parse_args()
+    main(save_best=a.save_best)

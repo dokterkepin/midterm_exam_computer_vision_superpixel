@@ -1,17 +1,18 @@
 {
  "wall": "synthetic_wall3",
  "n_gt": 10,
- "found": 7,
+ "found": 6,
  "fp": 0,
  "missed": [
   "hold_1",
   "hold_3",
-  "hold_4"
+  "hold_4",
+  "hold_6"
  ],
  "holds": [
   {
    "hold": "hold_2",
-   "pos_err_cm": 0.4054295499837184,
+   "pos_err_cm": 1.5822683463938743,
    "type_ok": true,
    "yaw_err_deg": 8.995437383553925,
    "z_err_cm": 0.0,
@@ -20,7 +21,7 @@
   },
   {
    "hold": "hold_5",
-   "pos_err_cm": 0.1029828141002183,
+   "pos_err_cm": 0.2582740017887973,
    "type_ok": true,
    "yaw_err_deg": 5.993253128627436,
    "z_err_cm": 0.0,
@@ -28,17 +29,8 @@
    "on_volume": false
   },
   {
-   "hold": "hold_6",
-   "pos_err_cm": 0.5849956324623292,
-   "type_ok": true,
-   "yaw_err_deg": 0.0,
-   "z_err_cm": 0.0,
-   "roll_pitch_err_deg": 0.0,
-   "on_volume": false
-  },
-  {
    "hold": "hold_7",
-   "pos_err_cm": 0.7949204991695743,
+   "pos_err_cm": 0.7705183969250847,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680281,
    "z_err_cm": 0.0,
@@ -47,7 +39,7 @@
   },
   {
    "hold": "hold_8",
-   "pos_err_cm": 0.6002122957754201,
+   "pos_err_cm": 0.09866509007749302,
    "type_ok": true,
    "yaw_err_deg": null,
    "z_err_cm": 0.0,
@@ -56,7 +48,7 @@
   },
   {
    "hold": "hold_9",
-   "pos_err_cm": 1.1822923158001133,
+   "pos_err_cm": 0.8930706131096221,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680274,
    "z_err_cm": 0.0,
@@ -65,7 +57,7 @@
   },
   {
    "hold": "hold_10",
-   "pos_err_cm": 0.2999440114421357,
+   "pos_err_cm": 0.3368774406219572,
    "type_ok": true,
    "yaw_err_deg": 2.979380534680274,
    "z_err_cm": 0.0,
@@ -75,15 +67,15 @@
  ],
  "algo": "slic",
  "settings": {
-  "region_px": 5,
+  "region_px": 8,
   "contrast_threshold": 40,
   "min_saturation": 118.0,
   "pooled": {
-   "tp": 18,
-   "fp": 0,
+   "tp": 20,
+   "fp": 1,
    "n_gt": 27,
-   "f1": 0.8
+   "f1": 0.833
   }
  },
- "stereo_pairs": 2
+ "stereo_pairs": 3
 }

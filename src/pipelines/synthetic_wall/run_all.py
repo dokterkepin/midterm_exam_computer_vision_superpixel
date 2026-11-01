@@ -9,7 +9,9 @@
 usage: python3 src/pipelines/synthetic_wall/run_all.py [--force] [--keep-baseline]
 --force           recompute the sweep of every wall (otherwise only walls whose inputs changed)
 --keep-baseline   skip step 2: run with the current baseline/synthetic_wall_algorithm.json
+With no options the values at the bottom of this file are used, so the editor's Run button works too.
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -26,4 +28,12 @@ def main(force=False, keep_baseline=False):
 
 
 if __name__ == "__main__":
-    main(force="--force" in sys.argv, keep_baseline="--keep-baseline" in sys.argv)
+    # ---- Run-button settings: used when the command line gives none ----
+    FORCE = False           # True = recompute the sweep of every wall
+    KEEP_BASELINE = False   # True = do not re-pick the baseline; run with the current file
+
+    ap = argparse.ArgumentParser(description="The whole synthetic-wall pipeline: sweep, best settings, run, compare.")
+    ap.add_argument("--force", action="store_true", default=FORCE, help="recompute the sweep of every wall")
+    ap.add_argument("--keep-baseline", action="store_true", default=KEEP_BASELINE, help="do not re-pick the baseline")
+    a = ap.parse_args()
+    main(force=a.force, keep_baseline=a.keep_baseline)

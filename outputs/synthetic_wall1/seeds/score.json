@@ -1,17 +1,16 @@
 {
  "wall": "synthetic_wall1",
  "n_gt": 10,
- "found": 7,
- "fp": 0,
+ "found": 8,
+ "fp": 2,
  "missed": [
   "hold_1",
-  "hold_5",
   "hold_10"
  ],
  "holds": [
   {
    "hold": "hold_2",
-   "pos_err_cm": 2.3291344851682907,
+   "pos_err_cm": 1.9787742291631205,
    "type_ok": true,
    "yaw_err_deg": 5.993253128627436,
    "z_err_cm": 0.0,
@@ -20,7 +19,7 @@
   },
   {
    "hold": "hold_3",
-   "pos_err_cm": 1.129888888342565,
+   "pos_err_cm": 0.9848699914201713,
    "type_ok": true,
    "yaw_err_deg": 3.013872593947152,
    "z_err_cm": 0.0,
@@ -29,7 +28,7 @@
   },
   {
    "hold": "hold_4",
-   "pos_err_cm": 0.3492719570764302,
+   "pos_err_cm": 0.2834270629280127,
    "type_ok": true,
    "yaw_err_deg": 68.99527136291334,
    "z_err_cm": 2.7,
@@ -37,8 +36,17 @@
    "on_volume": false
   },
   {
+   "hold": "hold_5",
+   "pos_err_cm": 0.14820985122452768,
+   "type_ok": true,
+   "yaw_err_deg": 3.0138725939471556,
+   "z_err_cm": 1.6,
+   "roll_pitch_err_deg": 0.0,
+   "on_volume": false
+  },
+  {
    "hold": "hold_6",
-   "pos_err_cm": 1.0533446966686633,
+   "pos_err_cm": 0.7605754729150909,
    "type_ok": true,
    "yaw_err_deg": 0.0,
    "z_err_cm": 0.0,
@@ -47,16 +55,16 @@
   },
   {
    "hold": "hold_7",
-   "pos_err_cm": 0.48117719189503944,
+   "pos_err_cm": 0.8001321703318748,
    "type_ok": true,
-   "yaw_err_deg": 2.979380534680274,
+   "yaw_err_deg": 0.0,
    "z_err_cm": 0.0,
    "roll_pitch_err_deg": 0.0,
    "on_volume": false
   },
   {
    "hold": "hold_8",
-   "pos_err_cm": 0.4899836017664341,
+   "pos_err_cm": 0.3865021733444693,
    "type_ok": true,
    "yaw_err_deg": 3.0021842549265045,
    "z_err_cm": 0.0,
@@ -65,7 +73,7 @@
   },
   {
    "hold": "hold_9",
-   "pos_err_cm": 1.113092345674883,
+   "pos_err_cm": 0.7988207370868605,
    "type_ok": true,
    "yaw_err_deg": 86.99779702110517,
    "z_err_cm": 0.0,
@@ -77,13 +85,13 @@
  "settings": {
   "region_px": 3,
   "contrast_threshold": 30,
-  "min_saturation": 118.0,
+  "min_saturation": 0.0,
   "pooled": {
-   "tp": 18,
-   "fp": 2,
+   "tp": 21,
+   "fp": 6,
    "n_gt": 27,
-   "f1": 0.766
+   "f1": 0.778
   }
  },
- "stereo_pairs": 2
+ "stereo_pairs": 6
 }

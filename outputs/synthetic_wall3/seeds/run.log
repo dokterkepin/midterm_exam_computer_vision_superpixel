@@ -1,26 +1,31 @@
-red marker 0.1 m, about 1948.7 px/m near the image origin; image resized x0.19
-SEEDS size 3 (6715 superpixels), contrast threshold 30, saturation floor 118
-TP=6 FP=0 FN=4   missed: ['hold_1', 'hold_3', 'hold_4', 'hold_10']
-wrote outputs/synthetic_wall3/seeds/ (6 detections)
-synthetic_wall3: eye 1870x328, camera height 0.2 m distance 1.8 m; blobs left=5 right=6
-matched 5 left/right pairs
+calibrated: about 1957.8 px/m near the image origin; image resized x0.19
+SEEDS size 3 (6552 superpixels), contrast threshold 30, saturation floor 0
+TP=8 FP=1 FN=2   missed: ['hold_1', 'hold_4']
+wrote outputs/synthetic_wall3/seeds/ (9 detections)
+synthetic_wall3: eye 1870x328, camera height 0.2 m distance 1.8 m; blobs left=8 right=9
+matched 8 left/right pairs
 
 hold      est (x, y, z) m            true (x, y, z) m           error cm (x, y, z)
 hold_5   ( 0.085, 0.576,-0.060)   ( 0.082, 0.566, 0.000)   (  0.2,  1.0, -6.0)
 hold_7   ( 0.260, 0.534,-0.004)   ( 0.258, 0.537, 0.000)   (  0.2, -0.3, -0.4)
 hold_2   (-0.132, 0.499, 0.024)   (-0.134, 0.506, 0.000)   (  0.1, -0.7,  2.4)
+hold_9   (-0.175, 0.324,-0.013)   (-0.175, 0.328, 0.000)   ( -0.0, -0.4, -1.3)
+hold_6   ( 0.093, 0.306,-0.003)   ( 0.092, 0.312, 0.000)   (  0.0, -0.6, -0.3)
+hold_10  ( 0.001, 0.180,-0.032)   ( 0.002, 0.184, 0.000)   ( -0.1, -0.4, -3.2)
 hold_8   ( 0.186, 0.081, 0.052)   ( 0.191, 0.082, 0.000)   ( -0.5, -0.1,  5.2)
 UNMATCHED ( 0.014, 0.010, 0.007)
 
-mean abs error cm: x=0.3 y=0.5 z=3.5
+mean abs error cm: x=0.2 y=0.5 z=2.7
 
 stereo depth error at 1.8 m is about 11.6 cm: too large, z = 0 (flat on the wall)
-wrote outputs/synthetic_wall3/seeds/output.json: 6 holds, z from stereo for 0
+wrote outputs/synthetic_wall3/seeds/output.json: 9 holds, z from stereo for 0
 
 hold      pos err   type   yaw err   z err   note
-  hold_2    0.2 cm  ok       9.0 deg   0.0 cm  
+  hold_2    0.5 cm  ok       9.0 deg   0.0 cm  
+  hold_3    9.3 cm  WRONG      - deg   8.0 cm  on a volume
   hold_5    0.3 cm  ok       3.0 deg   0.0 cm  
-  hold_6    0.3 cm  ok       0.0 deg   0.0 cm  
-  hold_7    0.5 cm  ok       3.0 deg   0.0 cm  
-  hold_8    0.4 cm  ok         - deg   0.0 cm  yaw template source
-  hold_9    0.2 cm  ok       6.0 deg   0.0 cm  
+  hold_6    0.2 cm  ok       0.0 deg   0.0 cm  
+  hold_7    0.2 cm  ok       3.0 deg   0.0 cm  
+  hold_8    0.3 cm  ok         - deg   0.0 cm  yaw template source
+  hold_9    0.3 cm  ok       3.0 deg   0.0 cm  
+  hold_10   0.3 cm  ok       3.0 deg   0.0 cm  

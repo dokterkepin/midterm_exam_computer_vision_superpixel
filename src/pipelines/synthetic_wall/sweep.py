@@ -8,8 +8,10 @@ With --save-best, the best setting of every algorithm (pooled over the walls, se
 baseline/synthetic_wall_algorithm.json, which is the baseline every run uses. Without it the baseline stays as it is
 (frozen), so a wall added later is scored held-out.
 
-usage: python3 sweep.py [wall ...] [--force] [--replot] [--save-best]   (default: every synthetic wall in dataset/)
+usage: python3 sweep.py [wall ...] [--force] [--replot] [--save-best]   (default: every synthetic wall in dataset/;
+with no arguments the values at the bottom of this file are used, so the editor's Run button works too)
 """
+import argparse
 import csv
 import json
 import os
@@ -46,7 +48,7 @@ BEST_RULE = ("per algorithm, the (size, threshold, saturation floor) with the hi
 def prepare(wall):
     orig = cv2.imread(paths.image_path(wall))
     gt = ev.load_gt(paths.gt_path(wall))
-    H = calibration.calibrate_homography(orig, square_m=ev.marker_size(paths.gt_path(wall)))
+    H = calibration.load_homography(wall)
     ppm = 1.0 / np.linalg.norm(calibration.apply_homography(H, [[1, 0]]) - calibration.apply_homography(H, [[0, 0]]))
     up = TARGET_PX_PER_M / ppm
     img = cv2.resize(orig, None, fx=up, fy=up, interpolation=cv2.INTER_CUBIC if up > 1 else cv2.INTER_AREA)
@@ -113,6 +115,11 @@ def choose(acc, walls):
     return out
 
 
+def setting_key(algo, s):
+    """Key of acc for the setting s of baseline/synthetic_wall_algorithm.json."""
+    return algo, s["region_px"], s["contrast_threshold"], s["min_saturation"]
+
+
 def read_csv(path):
     ints = ("size", "n_sp", "thresh", "tp", "fp", "fn", "n_gt")
     with open(path) as f:
@@ -157,6 +164,8 @@ def sweep(walls, force=False):
     """Rows of the sweep over `walls`; a wall whose cached sweep is up to date is not recomputed."""
     stale = [w for w in walls if force or not is_fresh(w)]
     if stale:
+        for w in stale:
+            calibration.calibrate_wall(w)                 # once per wall, before the parallel tasks
         tasks = [(w, a, s) for w in stale for a in ALGOS for s in SIZES]
         t0 = time.time()
         with Pool(min(WORKERS, len(tasks))) as pool:
@@ -191,14 +200,16 @@ def main(walls=None, replot=False, force=False, save_best=False):
         print(f"\nwrote {baseline.ALGO_FILE}")
     frozen = baseline.algorithms() if baseline.ALGO_FILE.exists() else best
 
-    print(f"\nbest pooled setting per algorithm ({n_gt} holds in {len(walls)} walls)")
+    print(f"\nbaseline setting per algorithm, scored on every wall ({n_gt} holds in {len(walls)} walls)")
     for algo in ALGOS:
         s, b = frozen["algorithms"][algo], best["algorithms"][algo]
-        p = s["pooled"]
+        a = acc[setting_key(algo, s)]
+        moved = (s["region_px"], s["contrast_threshold"], s["min_saturation"]) != \
+                (b["region_px"], b["contrast_threshold"], b["min_saturation"])
         print(f"  {algo:5s} size={s['region_px']:2d} T={s['contrast_threshold']:3d} sat={s['min_saturation']:3.0f}  "
-              f"TP={p['tp']:2d}/{p['n_gt']} FP={p['fp']:2d} F1={p['f1']:.2f}"
-              + ("" if b == s else f"   (sweep now prefers size={b['region_px']} T={b['contrast_threshold']} "
-                                   f"sat={b['min_saturation']:.0f}, F1={b['pooled']['f1']:.2f}; rerun with --save-best)"))
+              f"TP={a['tp']:2d}/{a['n']} FP={a['fp']:2d} F1={f1(a['tp'], a['fp'], a['n']):.2f}"
+              + (f"   (the sweep now prefers size={b['region_px']} T={b['contrast_threshold']} "
+                 f"sat={b['min_saturation']:.0f}, F1={b['pooled']['f1']:.2f}; rerun with --save-best)" if moved else ""))
     print(f"  best algorithm: {frozen['best_algorithm']}")
 
     # timings at the best algorithm's size, summed over walls
@@ -240,8 +251,8 @@ def plot(acc, base, n_gt):
             ax[k].scatter(*zip(*pts), s=9, alpha=.25, color=col[algo])
             ax[k].step(xs, ys, where="post", lw=2, color=col[algo], label=f"{algo.upper()} (size {s['region_px']})")
             if s["min_saturation"] == sat:
-                p = s["pooled"]
-                ax[k].plot(p["fp"], p["tp"] / p["n_gt"], "*", ms=14, color=col[algo], mec="k",
+                p = acc[setting_key(algo, s)]
+                ax[k].plot(p["fp"], p["tp"] / p["n"], "*", ms=14, color=col[algo], mec="k",
                            label=f"{algo.upper()} baseline (T={s['contrast_threshold']})")
         ax[k].set(xlabel="false positives (all walls)", ylabel="recall (true positive rate)",
                   title=title + " (threshold 10-100)", xlim=(0, xmax), ylim=(0, 0.9))
@@ -274,5 +285,16 @@ def plot(acc, base, n_gt):
 
 
 if __name__ == "__main__":
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
-    main(args or None, replot="--replot" in sys.argv, force="--force" in sys.argv, save_best="--save-best" in sys.argv)
+    # ---- Run-button settings: used when the command line gives none ----
+    WALLS = None          # list of wall names, e.g. ["synthetic_wall1", "synthetic_wall4"]; None = every synthetic wall
+    FORCE = False         # True = recompute the sweep of every wall, not only the changed ones
+    REPLOT = False        # True = only redraw the plots from the saved sweep_all.csv
+    SAVE_BEST = False     # True = write the best settings to baseline/synthetic_wall_algorithm.json
+
+    ap = argparse.ArgumentParser(description="Sweep SLIC / LSC / SEEDS over size, threshold and saturation floor.")
+    ap.add_argument("walls", nargs="*", help="wall folder names (default: every synthetic wall in dataset/)")
+    ap.add_argument("--force", action="store_true", default=FORCE, help="recompute every wall")
+    ap.add_argument("--replot", action="store_true", default=REPLOT, help="only redraw the plots")
+    ap.add_argument("--save-best", action="store_true", default=SAVE_BEST, help="write the best settings to the baseline file")
+    a = ap.parse_args()
+    main(a.walls or WALLS, replot=a.replot, force=a.force, save_best=a.save_best)

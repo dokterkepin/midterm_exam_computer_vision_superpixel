@@ -1,26 +1,27 @@
-red marker 1.0 m, about 183.6 px/m near the image origin; image resized x2.02
-LSC size 3 (718565 superpixels), contrast threshold 15, saturation floor 0
-TP=5 FP=2 FN=2   missed: ['hold_3', 'hold_5']
-wrote outputs/synthetic_wall2/lsc/ (7 detections)
-synthetic_wall2: eye 1874x328, camera height 0.7 m distance 2.0 m; blobs left=7 right=8
-matched 6 left/right pairs
+calibrated: about 183.4 px/m near the image origin; image resized x2.02
+LSC size 3 (719614 superpixels), contrast threshold 10, saturation floor 0
+TP=5 FP=1 FN=2   missed: ['hold_3', 'hold_5']
+wrote outputs/synthetic_wall2/lsc/ (6 detections)
+synthetic_wall2: eye 1874x328, camera height 0.7 m distance 2.0 m; blobs left=11 right=9
+matched 7 left/right pairs
 
 hold      est (x, y, z) m            true (x, y, z) m           error cm (x, y, z)
-hold_7   ( 1.456, 2.107, 0.011)   ( 1.452, 2.109, 0.000)   (  0.3, -0.2,  1.1)
-UNMATCHED ( 0.097, 1.624,-0.028)
-hold_4   (-0.003, 1.510,-0.030)   (-0.004, 1.498, 0.000)   (  0.0,  1.2, -3.0)
-hold_2   (-0.193, 1.296, 0.025)   (-0.197, 1.305, 0.000)   (  0.4, -1.0,  2.5)
-hold_1   ( 2.367, 0.691, 0.006)   ( 2.357, 0.695, 0.000)   (  1.0, -0.4,  0.6)
-hold_6   (-2.009, 0.446,-0.010)   (-1.986, 0.451, 0.000)   ( -2.3, -0.5, -1.0)
+hold_7   ( 1.425, 2.079, 0.051)   ( 1.452, 2.109, 0.000)   ( -2.7, -3.0,  5.1)
+hold_4   (-0.003, 1.488, 0.021)   (-0.004, 1.498, 0.000)   (  0.0, -1.0,  2.1)
+hold_2   (-0.191, 1.286, 0.058)   (-0.197, 1.305, 0.000)   (  0.7, -1.9,  5.8)
+hold_1   ( 2.456, 0.693,-0.070)   ( 2.357, 0.695, 0.000)   ( 10.0, -0.2, -7.0)
+UNMATCHED ( 0.834, 0.647, 0.332)
+hold_6   (-1.946, 0.453, 0.052)   (-1.986, 0.451, 0.000)   (  4.0,  0.3,  5.2)
+UNMATCHED ( 0.695, 0.395, 0.609)
 
-mean abs error cm: x=0.8 y=0.6 z=1.6
+mean abs error cm: x=3.5 y=1.3 z=5.1
 
 stereo depth error at 2.0 m is about 14.4 cm: too large, z = 0 (flat on the wall)
-wrote outputs/synthetic_wall2/lsc/output.json: 7 holds, z from stereo for 0
+wrote outputs/synthetic_wall2/lsc/output.json: 6 holds, z from stereo for 0
 
 hold      pos err   type   yaw err   z err   note
-  hold_1    1.2 cm  ok       9.0 deg   0.0 cm  
-  hold_2    0.1 cm  ok      75.0 deg   0.0 cm  
-  hold_4    0.4 cm  ok      87.0 deg   0.0 cm  
-  hold_6    1.9 cm  ok      69.0 deg   0.0 cm  
+  hold_1    1.4 cm  ok       9.0 deg   0.0 cm  
+  hold_2    0.2 cm  ok      78.0 deg   0.0 cm  
+  hold_4    0.5 cm  ok      84.0 deg   0.0 cm  
+  hold_6    2.2 cm  ok      69.0 deg   0.0 cm  
   hold_7    1.1 cm  ok      87.0 deg   0.0 cm  
